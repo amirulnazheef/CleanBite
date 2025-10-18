@@ -6,6 +6,8 @@ import '../widgets/category_chip.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 
+najipu
+
 class HomeScreen extends StatefulWidget {
   final Set<String> favoriteRecipeIds;
   final Function(String) onFavoriteToggle;
