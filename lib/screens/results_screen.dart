@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+import '../config/app_theme.dart';
+import '../config/device_config.dart';
 
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key});
@@ -23,63 +25,73 @@ class ResultsScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Product Results'),
-        backgroundColor: Colors.green,
+        backgroundColor: AppTheme.background,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(DeviceConfig.spacing16(context)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Product Image
             Center(
               child: Container(
-                width: 150,
-                height: 150,
+                width: DeviceConfig.getResponsiveSize(context, 150),
+                height: DeviceConfig.getResponsiveSize(context, 150),
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.surfaceDark),
                 ),
-                child: const Icon(Icons.fastfood, size: 80, color: Colors.grey),
+                child: Icon(
+                  Icons.fastfood,
+                  size: DeviceConfig.getResponsiveSize(context, 80),
+                  color: AppTheme.primaryBrown,
+                ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: DeviceConfig.spacing24(context)),
 
             // Product Name
             Text(
               product.nameEnglish,
-              style: const TextStyle(
-                fontSize: 24,
+              style: TextStyle(
+                fontSize: DeviceConfig.fontSize24(context),
                 fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
               ),
             ),
             Text(
               product.nameKorean,
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+                fontSize: DeviceConfig.fontSize18(context),
+                color: AppTheme.textSecondary,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: DeviceConfig.spacing8(context)),
             Text(
               product.brand,
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[500],
+                fontSize: DeviceConfig.fontSize16(context),
+                color: AppTheme.textLight,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: DeviceConfig.spacing24(context)),
 
             // Dietary Classification Badges
-            const Text(
+            Text(
               'Dietary Classifications',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: DeviceConfig.fontSize18(context),
                 fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: DeviceConfig.spacing12(context)),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -90,82 +102,104 @@ class ResultsScreen extends StatelessWidget {
                 _buildBadge('Kosher', product.isKosher),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: DeviceConfig.spacing24(context)),
 
             // Explanation
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(DeviceConfig.spacing16(context)),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange[200]!),
+                border: Border.all(color: AppTheme.primaryBrown.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.orange),
-                      SizedBox(width: 8),
+                      Icon(
+                        Icons.info_outline,
+                        color: AppTheme.primaryBrown,
+                        size: DeviceConfig.getResponsiveSize(context, 20),
+                      ),
+                      SizedBox(width: DeviceConfig.spacing8(context)),
                       Text(
                         'Explanation',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: DeviceConfig.fontSize16(context),
                           fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(product.explanation),
+                  SizedBox(height: DeviceConfig.spacing8(context)),
+                  Text(
+                    product.explanation,
+                    style: TextStyle(
+                      fontSize: DeviceConfig.fontSize14(context),
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: DeviceConfig.spacing24(context)),
 
             // Allergens
             if (product.allergens.isNotEmpty) ...[
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(DeviceConfig.spacing16(context)),
                 decoration: BoxDecoration(
-                  color: Colors.red[50],
+                  color: AppTheme.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red[200]!),
+                  border: Border.all(color: AppTheme.error.withOpacity(0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.warning_amber, color: Colors.red),
-                        SizedBox(width: 8),
+                        Icon(
+                          Icons.warning_amber,
+                          color: AppTheme.error,
+                          size: DeviceConfig.getResponsiveSize(context, 20),
+                        ),
+                        SizedBox(width: DeviceConfig.spacing8(context)),
                         Text(
                           'Allergen Warning',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: DeviceConfig.fontSize16(context),
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: AppTheme.error,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text('Contains: ${product.allergens.join(", ")}'),
+                    SizedBox(height: DeviceConfig.spacing8(context)),
+                    Text(
+                      'Contains: ${product.allergens.join(", ")}',
+                      style: TextStyle(
+                        fontSize: DeviceConfig.fontSize14(context),
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: DeviceConfig.spacing24(context)),
             ],
 
             // Ingredients List
-            const Text(
+            Text(
               'Ingredients',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: DeviceConfig.fontSize18(context),
                 fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: DeviceConfig.spacing12(context)),
             ...product.ingredientsEnglish.asMap().entries.map((entry) {
               final index = entry.key;
               final ingredient = entry.value;
@@ -175,22 +209,23 @@ class ResultsScreen extends StatelessWidget {
                    prod.problematicIngredients.contains(prod.ingredientsKorean[index]));
               
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: DeviceConfig.spacing8(context)),
                 child: Row(
                   children: [
                     Icon(
                       isProblematic ? Icons.cancel : Icons.check_circle,
-                      color: isProblematic ? Colors.red : Colors.green,
-                      size: 20,
+                      color: isProblematic ? AppTheme.error : AppTheme.accentGreen,
+                      size: DeviceConfig.getResponsiveSize(context, 20),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: DeviceConfig.spacing8(context)),
                     Expanded(
                       child: Text(
                         index < prod.ingredientsKorean.length
                             ? '$ingredient (${prod.ingredientsKorean[index]})'
                             : ingredient,
                         style: TextStyle(
-                          color: isProblematic ? Colors.red : Colors.black,
+                          fontSize: DeviceConfig.fontSize14(context),
+                          color: isProblematic ? AppTheme.error : AppTheme.textPrimary,
                           fontWeight: isProblematic ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -199,7 +234,7 @@ class ResultsScreen extends StatelessWidget {
                 ),
               );
             }),
-            const SizedBox(height: 24),
+            SizedBox(height: DeviceConfig.spacing24(context)),
 
             // Action Buttons
             Row(
@@ -212,14 +247,26 @@ class ResultsScreen extends StatelessWidget {
                         const SnackBar(content: Text('Added to favorites')),
                       );
                     },
-                    icon: const Icon(Icons.favorite_border),
-                    label: const Text('Save'),
+                    icon: Icon(
+                      Icons.favorite_border,
+                      size: DeviceConfig.getResponsiveSize(context, 20),
+                    ),
+                    label: Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: DeviceConfig.fontSize16(context),
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: AppTheme.primaryBrown,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: DeviceConfig.spacing12(context),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: DeviceConfig.spacing12(context)),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
@@ -228,10 +275,22 @@ class ResultsScreen extends StatelessWidget {
                         const SnackBar(content: Text('Report submitted')),
                       );
                     },
-                    icon: const Icon(Icons.flag_outlined),
-                    label: const Text('Report'),
+                    icon: Icon(
+                      Icons.flag_outlined,
+                      size: DeviceConfig.getResponsiveSize(context, 20),
+                    ),
+                    label: Text(
+                      'Report',
+                      style: TextStyle(
+                        fontSize: DeviceConfig.fontSize16(context),
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      foregroundColor: AppTheme.primaryBrown,
+                      side: BorderSide(color: AppTheme.primaryBrown),
+                      padding: EdgeInsets.symmetric(
+                        vertical: DeviceConfig.spacing12(context),
+                      ),
                     ),
                   ),
                 ),
@@ -247,10 +306,12 @@ class ResultsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isCompliant ? Colors.green[50] : Colors.red[50],
+        color: isCompliant 
+            ? AppTheme.accentGreen.withOpacity(0.1) 
+            : AppTheme.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isCompliant ? Colors.green : Colors.red,
+          color: isCompliant ? AppTheme.accentGreen : AppTheme.error,
           width: 2,
         ),
       ),
@@ -259,14 +320,14 @@ class ResultsScreen extends StatelessWidget {
         children: [
           Icon(
             isCompliant ? Icons.check_circle : Icons.cancel,
-            color: isCompliant ? Colors.green : Colors.red,
+            color: isCompliant ? AppTheme.accentGreen : AppTheme.error,
             size: 20,
           ),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              color: isCompliant ? Colors.green[900] : Colors.red[900],
+              color: isCompliant ? AppTheme.accentGreen : AppTheme.error,
               fontWeight: FontWeight.bold,
             ),
           ),

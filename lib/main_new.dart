@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
-import 'screens/splash_screen.dart';
+import 'screens/new_splash_screen.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/new_login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/main_menu_screen.dart';
 
@@ -41,9 +41,9 @@ class CleanBiteApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
+        '/': (context) => const NewSplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const NewLoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const MainMenuScreen(),
       },

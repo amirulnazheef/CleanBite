@@ -4,14 +4,14 @@ import '../theme/app_theme.dart';
 
 /// Splash Screen - Flat Design with Fade Animation
 /// Shows app logo and name, then transitions to onboarding
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class NewSplashScreen extends StatefulWidget {
+  const NewSplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<NewSplashScreen> createState() => _NewSplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _NewSplashScreenState extends State<NewSplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;

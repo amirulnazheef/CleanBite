@@ -4,8 +4,8 @@ import '../widgets/liquid_glass_button.dart';
 
 /// Home Screen - Flat Design
 /// Main dashboard with recent scans and quick actions
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class NewHomeScreen extends StatelessWidget {
+  const NewHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

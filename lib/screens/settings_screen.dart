@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../config/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -8,9 +9,12 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: Colors.green,
+        backgroundColor: AppTheme.background,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
       ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
@@ -167,20 +171,20 @@ class SettingsScreen extends StatelessWidget {
               // Account
               _buildSectionHeader('Account'),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
+                leading: const Icon(Icons.logout, color: AppTheme.error),
                 title: const Text(
                   'Logout',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: AppTheme.error),
                 ),
                 onTap: () {
                   _showLogoutDialog(context, userProvider);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                leading: const Icon(Icons.delete_forever, color: AppTheme.error),
                 title: const Text(
                   'Delete Account',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: AppTheme.error),
                 ),
                 onTap: () {
                   _showDeleteAccountDialog(context, userProvider);
@@ -202,7 +206,7 @@ class SettingsScreen extends StatelessWidget {
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: AppTheme.textSecondary,
         ),
       ),
     );
@@ -370,15 +374,18 @@ class SettingsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              userProvider.logout();
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
+            ElevatedButton(
+              onPressed: () {
+                userProvider.logout();
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.error,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Logout'),
+            ),
         ],
       ),
     );
@@ -397,15 +404,18 @@ class SettingsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              userProvider.deleteAccount();
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
+            ElevatedButton(
+              onPressed: () {
+                userProvider.deleteAccount();
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.error,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
         ],
       ),
     );

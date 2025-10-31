@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
+import '../config/app_theme.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
@@ -35,8 +36,9 @@ class RecipeCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.surfaceDark),
                 ),
                 child: Center(
                   child: Text(
@@ -61,9 +63,9 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       recipe.description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: AppTheme.textSecondary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -71,23 +73,23 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                        const Icon(Icons.access_time, size: 16, color: AppTheme.textLight),
                         const SizedBox(width: 4),
                         Text(
                           '${recipe.prepTime} min',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.textLight,
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Icon(Icons.local_fire_department, size: 16, color: Colors.grey[600]),
+                        const Icon(Icons.local_fire_department, size: 16, color: AppTheme.textLight),
                         const SizedBox(width: 4),
                         Text(
                           '${recipe.calories} cal',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppTheme.textLight,
                           ),
                         ),
                       ],
@@ -99,7 +101,7 @@ class RecipeCard extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : Colors.grey,
+                  color: isFavorite ? AppTheme.accentGreen : AppTheme.textLight,
                 ),
                 onPressed: onFavoriteToggle,
               ),

@@ -4,14 +4,14 @@ import '../widgets/liquid_glass_button.dart';
 
 /// Scan Screen - Flat Design
 /// Camera view for barcode scanning with instructions
-class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+class NewScanScreen extends StatefulWidget {
+  const NewScanScreen({super.key});
 
   @override
-  State<ScanScreen> createState() => _ScanScreenState();
+  State<NewScanScreen> createState() => _NewScanScreenState();
 }
 
-class _ScanScreenState extends State<ScanScreen> {
+class _NewScanScreenState extends State<NewScanScreen> {
   bool _isScanning = false;
 
   Future<void> _startScan() async {
@@ -101,27 +101,21 @@ class _ScanScreenState extends State<ScanScreen> {
                         Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.qr_code_scanner,
-                                size: 80,
+                                size: 100,
                                 color: AppTheme.primaryButton.withOpacity(0.3),
                               ),
-                              const SizedBox(height: AppTheme.spacing16),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppTheme.spacing24,
+                              const SizedBox(height: AppTheme.spacing24),
+                              Text(
+                                _isScanning
+                                    ? 'Scanning...'
+                                    : 'Align barcode inside the frame',
+                                style: AppTheme.bodyLarge.copyWith(
+                                  color: AppTheme.textSecondary,
                                 ),
-                                child: Text(
-                                  _isScanning
-                                      ? 'Scanning...'
-                                      : 'Align barcode inside the frame',
-                                  style: AppTheme.bodyMedium.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                textAlign: TextAlign.center,
                               ),
                               if (_isScanning) ...[
                                 const SizedBox(height: AppTheme.spacing16),

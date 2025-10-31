@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/liquid_glass_button.dart';
 
-/// Login Screen - Flat Design
-/// Email/Password login with Google Sign-In option
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+/// Login Screen - Flat Design with Liquid Glass Buttons
+/// Supports Google Sign-In and Email/Password authentication
+class NewLoginScreen extends StatefulWidget {
+  const NewLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<NewLoginScreen> createState() => _NewLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _NewLoginScreenState extends State<NewLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  bool _isPasswordVisible = false;
   bool _isLoading = false;
 
   @override
@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleEmailLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
@@ -39,16 +39,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
+  Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     
-    // Simulate Google sign-in delay
+    // Simulate Google login delay
     await Future.delayed(const Duration(seconds: 2));
     
     if (mounted) {
       setState(() => _isLoading = false);
       Navigator.pushReplacementNamed(context, '/home');
     }
+  }
+
+  void _navigateToSignup() {
+    Navigator.pushNamed(context, '/signup');
   }
 
   @override
@@ -67,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppTheme.spacing48),
-                  
+
                   // Logo
                   Center(
                     child: Container(
@@ -75,12 +79,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 100,
                       decoration: BoxDecoration(
                         color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryButton.withOpacity(0.2),
-                            blurRadius: 15,
-                            spreadRadius: 3,
+                            blurRadius: 20,
+                            spreadRadius: 5,
                           ),
                         ],
                       ),
@@ -92,8 +96,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacing32),
-                  
+                  const SizedBox(height: AppTheme.spacing24),
+
                   // Welcome Text
                   const Text(
                     'Welcome Back',
@@ -107,21 +111,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppTheme.spacing48),
-                  
+
                   // Email Field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Email',
                       hintText: 'Enter your email',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      filled: true,
-                      fillColor: AppTheme.cardBackground,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                        borderSide: BorderSide.none,
-                      ),
+                      prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -134,30 +132,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: AppTheme.spacing16),
-                  
+
                   // Password Field
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: _obscurePassword,
+                    obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
                       prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+                          _isPasswordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                         ),
                         onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
                         },
-                      ),
-                      filled: true,
-                      fillColor: AppTheme.cardBackground,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                        borderSide: BorderSide.none,
                       ),
                     ),
                     validator: (value) {
@@ -170,66 +164,68 @@ class _LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: AppTheme.spacing12),
-                  
+                  const SizedBox(height: AppTheme.spacing8),
+
                   // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
+                        // TODO: Implement forgot password
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Forgot password - Coming soon'),
                           ),
                         );
                       },
-                      child: const Text('Forgot Password?'),
+                      child: const Text(
+                        'Forgot Password?',
+                        style: AppTheme.bodyMedium,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppTheme.spacing24),
-                  
-                  // Sign In Button
+
+                  // Login Button
                   LiquidGlassButton(
                     text: 'Sign In',
-                    onPressed: _handleLogin,
-                    icon: Icons.login,
-                    width: double.infinity,
+                    onPressed: _handleEmailLogin,
                     isLoading: _isLoading,
+                    icon: Icons.login,
                   ),
                   const SizedBox(height: AppTheme.spacing24),
-                  
+
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: AppTheme.textLight)),
+                      const Expanded(child: Divider()),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppTheme.spacing16,
                         ),
                         child: Text(
                           'OR',
-                          style: AppTheme.bodySmall.copyWith(
+                          style: AppTheme.bodyMedium.copyWith(
                             color: AppTheme.textLight,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: AppTheme.textLight)),
+                      const Expanded(child: Divider()),
                     ],
                   ),
                   const SizedBox(height: AppTheme.spacing24),
-                  
+
                   // Google Sign In Button
                   LiquidGlassButton(
                     text: 'Continue with Google',
-                    onPressed: _handleGoogleSignIn,
-                    icon: Icons.g_mobiledata,
-                    width: double.infinity,
-                    isOutlined: true,
+                    onPressed: _handleGoogleLogin,
                     color: AppTheme.cardBackground,
                     textColor: AppTheme.textPrimary,
+                    icon: Icons.g_mobiledata,
+                    isOutlined: true,
                   ),
                   const SizedBox(height: AppTheme.spacing32),
-                  
+
                   // Sign Up Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -239,12 +235,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: AppTheme.bodyMedium,
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/signup');
-                        },
-                        child: const Text(
+                        onPressed: _navigateToSignup,
+                        child: Text(
                           'Sign Up',
-                          style: TextStyle(
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.primaryButton,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

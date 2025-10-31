@@ -4,8 +4,8 @@ import '../widgets/liquid_glass_button.dart';
 
 /// Profile Screen - Flat Design
 /// User profile with settings and preferences
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class NewProfileScreen extends StatelessWidget {
+  const NewProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +53,10 @@ class ProfileScreen extends StatelessWidget {
                           color: AppTheme.primaryButton.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
                             '👤',
-                            style: TextStyle(fontSize: 50),
+                            style: const TextStyle(fontSize: 50),
                           ),
                         ),
                       ),

@@ -1,5 +1,4 @@
 import '../data/ingredient_database.dart';
-import '../models/ingredient.dart';
 
 class AIClassificationService {
   // Classify ingredients based on dietary rules
