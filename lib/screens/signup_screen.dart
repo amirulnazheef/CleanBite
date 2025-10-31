@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/liquid_glass_button.dart';
+import '../providers/user_provider.dart';
 
 /// Signup Screen - Flat Design with Liquid Glass Buttons
 /// Supports Google Sign-Up and Email/Password registration
@@ -36,6 +38,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please accept the terms and conditions'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -44,12 +47,29 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // Simulate signup delay
-      await Future.delayed(const Duration(seconds: 2));
-      
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.pushReplacementNamed(context, '/home');
+      try {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        
+        await userProvider.register(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          name: _nameController.text.trim(),
+        );
+        
+        if (mounted) {
+          setState(() => _isLoading = false);
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -62,7 +82,11 @@ class _SignupScreenState extends State<SignupScreen> {
     
     if (mounted) {
       setState(() => _isLoading = false);
-      Navigator.pushReplacementNamed(context, '/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google Sign-Up - Coming soon'),
+        ),
+      );
     }
   }
 
@@ -302,13 +326,49 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: AppTheme.spacing24),
 
                   // Google Sign Up Button
-                  LiquidGlassButton(
-                    text: 'Sign up with Google',
-                    onPressed: _handleGoogleSignup,
-                    color: AppTheme.cardBackground,
-                    textColor: AppTheme.textPrimary,
-                    icon: Icons.g_mobiledata,
-                    isOutlined: true,
+                  GestureDetector(
+                    onTap: _isLoading ? null : _handleGoogleSignup,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppTheme.spacing16,
+                        horizontal: AppTheme.spacing24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        border: Border.all(
+                          color: AppTheme.textLight.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/google.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: AppTheme.spacing12),
+                          const Text(
+                            'Sign up with Google',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF373737),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppTheme.spacing24),
 

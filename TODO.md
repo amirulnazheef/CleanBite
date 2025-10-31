@@ -1,95 +1,119 @@
-# CleanBite App Implementation Plan
+# Authentication System Implementation - TODO
 
-## Phase 1: Dependencies & Setup
-- [ ] Add required packages to pubspec.yaml
-  - barcode_scan2 (barcode scanning)
-  - image_picker (camera/gallery access)
-  - google_ml_kit (OCR functionality)
-  - http (API calls for translation)
-  - flutter_swiper_null_safety (onboarding slides)
-  - provider (state management)
-  - shared_preferences (local storage)
+## ✅ Completed Steps
 
-## Phase 2: Models
-- [ ] Create lib/models/product.dart (product data model)
-- [ ] Create lib/models/ingredient.dart (ingredient data model)
-- [ ] Create lib/models/user_preferences.dart (user dietary preferences)
-- [ ] Create lib/models/scan_history.dart (scan history model)
+### Phase 1: Core Authentication Infrastructure
+- [x] Add dependencies (crypto, uuid) to pubspec.yaml
+- [x] Create User model (lib/models/user.dart)
+- [x] Create AuthService (lib/services/auth_service.dart)
+  - [x] Password hashing with SHA-256
+  - [x] User registration
+  - [x] User login
+  - [x] Email validation
+  - [x] Password strength validation
+  - [x] Get current user
+  - [x] Update user profile
+  - [x] Change password
+  - [x] Logout
+  - [x] Delete account
+- [x] Update UserProvider (lib/providers/user_provider.dart)
+  - [x] Integrate AuthService
+  - [x] Per-user preferences storage
+  - [x] Register method
+  - [x] Login method
+  - [x] Update profile method
+  - [x] Change password method
+  - [x] Logout method
+  - [x] Delete account method
+- [x] Update main.dart with Provider integration
+- [x] Update SplashScreen to check login status
+- [x] Update LoginScreen with authentication
+- [x] Update SignupScreen with authentication
 
-## Phase 3: Services
-- [ ] Create lib/services/ocr_service.dart (OCR using google_ml_kit)
-- [ ] Create lib/services/database_service.dart (mock database with sample products)
-- [ ] Create lib/services/ai_classification_service.dart (dietary classification logic)
-- [ ] Update lib/services/translation_service.dart (ensure it works properly)
+## 🔄 In Progress
 
-## Phase 4: Screens Implementation
-- [ ] Create lib/screens/login_screen.dart
-  - Login options (Email/Google/Apple mock)
-  - Profile setup form (name, dietary preferences, allergies)
-  - Language selection (Korean/English)
-  - Guest mode option
-  
-- [ ] Update lib/screens/home_screen.dart (Main Dashboard)
-  - Search bar for manual product search
-  - Floating Action Button (FAB) for scan
-  - Recent scans list with dietary icons
-  - Quick filter chips (Vegan, Halal, Kosher, etc.)
-  - Profile icon navigation
-  
-- [ ] Update lib/screens/scan_screen.dart
-  - Camera view with barcode frame
-  - Real-time detection UI
-  - Loading animation during processing
-  - Manual input option
-  - Integration with all services (database -> OCR -> translate -> classify)
-  
-- [ ] Create lib/screens/results_screen.dart
-  - Product name and image display
-  - Dietary classification badges (✅ Halal, ❌ Vegan, ⚠️ Contains nuts)
-  - Short explanation text
-  - Ingredient list with problematic ingredients highlighted
-  - Save/Favorite/Report buttons
-  - "See more details" link
-  
-- [ ] Create lib/screens/ingredient_explanation_screen.dart
-  - Ingredient name and details
-  - Dietary classifications
-  - Reason/Reference for classification
-  - Add to favorites option
-  - Suggest correction button
-  
-- [ ] Create lib/screens/settings_screen.dart
-  - Language settings toggle
-  - Dietary preferences update
-  - Dark mode toggle
-  - Notifications settings
-  - About/Contact/Feedback sections
-  
-- [ ] Update lib/screens/profile_screen.dart
-  - User information display
-  - Scan history overview
-  - Favorite products list
-  - Account settings (logout, delete account)
+### Phase 2: Profile Management Screens
+- [ ] Create Edit Profile Screen (lib/screens/edit_profile_screen.dart)
+  - [ ] Edit name
+  - [ ] Edit email
+  - [ ] Change password
+  - [ ] Profile image upload (optional)
+- [ ] Create Dietary Preferences Screen (lib/screens/dietary_preferences_screen.dart)
+  - [ ] Multi-select dietary restrictions (Halal, Kosher, Vegan, Vegetarian, etc.)
+  - [ ] Save preferences
+- [ ] Create Allergen Alerts Screen (lib/screens/allergen_alerts_screen.dart)
+  - [ ] Multi-select allergens
+  - [ ] Save allergen list
 
-## Phase 5: State Management
-- [ ] Create lib/providers/user_provider.dart (user preferences and auth state)
-- [ ] Create lib/providers/scan_provider.dart (scan history and favorites)
-- [ ] Update lib/main.dart to integrate Provider
+### Phase 3: Profile Screen Integration
+- [ ] Update Profile Screen (lib/screens/profile_screen.dart)
+  - [ ] Display user info (name, email)
+  - [ ] Show dietary preferences
+  - [ ] Show allergen alerts
+  - [ ] Navigation to Edit Profile
+  - [ ] Navigation to Dietary Preferences
+  - [ ] Navigation to Allergen Alerts
+  - [ ] Logout button
+  - [ ] Delete account button
 
-## Phase 6: Data Layer
-- [ ] Create lib/data/mock_products.dart (sample product database)
-- [ ] Create lib/data/ingredient_database.dart (ingredient classifications)
+### Phase 4: Settings Screen Integration
+- [ ] Update Settings Screen (lib/screens/settings_screen.dart)
+  - [ ] Link to Edit Profile
+  - [ ] Link to Dietary Preferences
+  - [ ] Link to Allergen Alerts
+  - [ ] Account management section
 
-## Phase 7: Testing & Polish
-- [ ] Test navigation flow: Splash -> Login -> Home -> Scan -> Results
-- [ ] Test barcode scanning functionality
-- [ ] Test OCR and translation flow
-- [ ] Test classification logic
-- [ ] Verify UI/UX consistency across all screens
-- [ ] Add loading states and error handling
-- [ ] Test language switching
+## 📋 Pending Steps
 
-## Phase 8: Documentation
-- [ ] Update README.md with project description and setup instructions
-- [ ] Add comments to complex code sections
-- [ ] Document API integration points for future real database connection
+### Phase 5: Testing & Validation
+- [ ] Test user registration flow
+- [ ] Test login flow
+- [ ] Test logout flow
+- [ ] Test profile editing
+- [ ] Test dietary preferences
+- [ ] Test allergen alerts
+- [ ] Test password change
+- [ ] Test account deletion
+- [ ] Test multiple user accounts
+- [ ] Test data isolation between users
+
+### Phase 6: Security Enhancements (Optional)
+- [ ] Implement password strength indicator
+- [ ] Add email verification (if backend available)
+- [ ] Add "Remember Me" functionality
+- [ ] Add biometric authentication (fingerprint/face)
+- [ ] Implement session timeout
+- [ ] Add password reset functionality
+
+### Phase 7: UI/UX Improvements
+- [ ] Add loading states
+- [ ] Add error handling
+- [ ] Add success messages
+- [ ] Add confirmation dialogs
+- [ ] Improve form validation feedback
+- [ ] Add animations
+
+## 🎯 Next Immediate Steps
+
+1. Create Edit Profile Screen
+2. Create Dietary Preferences Screen
+3. Create Allergen Alerts Screen
+4. Update Profile Screen to display user data
+5. Test the complete authentication flow
+
+## 📝 Notes
+
+- All user data is stored locally using SharedPreferences
+- Passwords are hashed using SHA-256
+- Each user has isolated preferences and data
+- User IDs are generated using UUID v4
+- Email validation is performed on registration and login
+- Password minimum length is 6 characters
+
+## 🔒 Security Considerations
+
+- Passwords are never stored in plain text
+- SHA-256 hashing is used for password security
+- Email uniqueness is enforced
+- Input validation on all forms
+- Secure data storage using SharedPreferences

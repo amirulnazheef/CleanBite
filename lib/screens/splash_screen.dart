@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../theme/app_theme.dart';
+import '../providers/user_provider.dart';
 
 /// Splash Screen - Flat Design with Fade Animation
-/// Shows app logo and name, then transitions to onboarding
+/// Shows app logo and name, then transitions based on login status
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -44,12 +46,27 @@ class _SplashScreenState extends State<SplashScreen>
     // Start animation
     _controller.forward();
 
-    // Navigate to onboarding after delay
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/onboarding');
-      }
-    });
+    // Check login status and navigate
+    _checkLoginAndNavigate();
+  }
+
+  Future<void> _checkLoginAndNavigate() async {
+    // Wait for animation to complete
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (!mounted) return;
+
+    // Get user provider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Navigate based on login status
+    if (userProvider.isLoggedIn) {
+      // User is logged in, go directly to home
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // User not logged in, go to onboarding
+      Navigator.pushReplacementNamed(context, '/onboarding');
+    }
   }
 
   @override

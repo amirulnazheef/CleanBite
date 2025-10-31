@@ -53,6 +53,10 @@ dependencies:
   
   # Local Storage
   shared_preferences: ^2.2.2
+  
+  # Security & Utilities
+  crypto: ^3.0.3
+  uuid: ^4.0.0
 
 dev_dependencies:
   flutter_test:
