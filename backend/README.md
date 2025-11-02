@@ -27,7 +27,7 @@ Add your `service_account.json` and update `.env`
 (ambik dalam group asuni hantar)(ada private key so taknak push)
 
 ### 4. Run
-uvicorn app:app --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 **3. Update your `.gitignore`**
 models/
