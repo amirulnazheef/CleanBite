@@ -14,6 +14,9 @@ class Product {
   final List<String> allergens;
   final List<String> problematicIngredients;
   final String explanation;
+  final List<dynamic>? ingredientDetails; // [{name: "flour", vegan: true, ...}]
+  final List<dynamic>? allergenDetails;
+  final String? friendlySummary; // "This product is vegetarian friendly"
 
   Product({
     required this.id,
@@ -31,6 +34,9 @@ class Product {
     required this.allergens,
     required this.problematicIngredients,
     required this.explanation,
+    this.ingredientDetails,
+    this.allergenDetails,
+    this.friendlySummary,
   });
 
   Map<String, dynamic> toJson() {
