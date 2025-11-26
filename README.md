@@ -56,8 +56,8 @@ CleanBite is a modern Flutter application that helps users make informed food ch
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/cleanbite.git
-   cd cleanbite
+   git clone https://github.com/amirulnazheef/CleanBite.git
+   cd CleanBite
    ```
 
 2. **Install dependencies**
@@ -119,7 +119,7 @@ lib/
 │   ├── auth/            # Login, signup screens
 │   ├── home/            # Home dashboard
 │   ├── scan/            # Scanning functionality
-│   ├── profile/         # User profile and settings
+│   ├── profile/          # User profile and settings
 │   ├── history/         # Scan history
 │   ├── onboarding/      # Onboarding flow
 │   └── splash/          # Splash screen

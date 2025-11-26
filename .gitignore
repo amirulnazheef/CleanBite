@@ -24,9 +24,11 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
+# See https://www.dartlang.org/guides/libraries/private-files
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.packages
 .flutter-plugins-dependencies
 .flutter-plugins
 .pub-cache/
@@ -63,6 +65,9 @@ app.*.map.json
 /web/*.js.map
 /web/*.js.deps
 /web/*.js.info
+*.dart.js
+*.js_
+*.info.json
 
 # Firebase
 firebase_options.dart
