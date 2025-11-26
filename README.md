@@ -1,35 +1,219 @@
-# CleanBite
+# 🍽️ CleanBite
 
-CleanBite - AI-powered food scanner for dietary classification and allergen detection.
+<div align="center">
 
-## Features
+**AI-powered food scanner for dietary classification and allergen detection**
 
-- 🔍 Barcode and ingredient list scanning
-- 🥗 Dietary classification (Halal, Kosher, Vegan, Vegetarian)
-- ⚠️ Allergen detection and alerts
-- 👤 User profiles with dietary preferences
-- 📱 Web app with Firebase authentication
-- 🔐 Google Sign-In support
+[![Flutter](https://img.shields.io/badge/Flutter-3.10+-02569B?logo=flutter)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Getting Started
+</div>
 
-1. Install dependencies:
+---
+
+## 📖 About
+
+CleanBite is a modern Flutter application that helps users make informed food choices by scanning products and analyzing their ingredients. The app provides instant dietary classification (Halal, Kosher, Vegan, Vegetarian) and comprehensive allergen detection to keep users safe and aligned with their dietary preferences.
+
+### Key Features
+
+- 🔍 **Multiple Scanning Options**
+  - Barcode scanning for quick product lookup
+  - OCR-based ingredient list scanning
+  - Camera and gallery image upload support
+
+- 🥗 **Dietary Classification**
+  - Automatic detection of Halal, Kosher, Vegan, and Vegetarian compliance
+  - Real-time dietary preference matching
+
+- ⚠️ **Allergen Detection**
+  - Comprehensive allergen database
+  - Custom allergen tracking
+  - Instant alerts for potential allergens
+
+- 👤 **User Profiles**
+  - Personalized dietary preferences
+  - Allergen management
+  - Scan history tracking
+  - Google Sign-In integration
+
+- 🎨 **Modern UI/UX**
+  - Beautiful glassmorphism design
+  - Smooth animations and transitions
+  - Responsive layout for all screen sizes
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Flutter SDK (3.10.0 or higher)
+- Dart SDK (included with Flutter)
+- Firebase account
+- Google Sign-In credentials (for authentication)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/cleanbite.git
+   cd cleanbite
+   ```
+
+2. **Install dependencies**
    ```bash
    flutter pub get
    ```
 
-2. Configure Firebase:
+3. **Configure Firebase**
+   
+   Install FlutterFire CLI if you haven't already:
+   ```bash
+   dart pub global activate flutterfire_cli
+   ```
+   
+   Configure Firebase for your project:
    ```bash
    flutterfire configure
    ```
+   
+   This will generate the necessary configuration files for all platforms.
 
-3. Run the app:
+4. **Set up Google Sign-In**
+   
+   - Configure OAuth 2.0 credentials in [Google Cloud Console](https://console.cloud.google.com/)
+   - Add your web client ID to Firebase Authentication settings
+   - For Android: Add SHA-1 fingerprint to Firebase project settings
+
+5. **Run the app**
    ```bash
+   # Web
    flutter run -d chrome
+   
+   # Android
+   flutter run -d android
+   
+   # iOS
+   flutter run -d ios
    ```
 
-## Tech Stack
+## 📱 Platform Support
 
-- Flutter
-- Firebase (Auth, Firestore)
-- Google Sign-In
+- ✅ Web
+- ✅ Android
+- ✅ iOS
+- ✅ macOS
+- ✅ Linux
+- ✅ Windows
+
+## 🏗️ Project Structure
+
+```
+lib/
+├── core/
+│   ├── routes/          # App routing configuration
+│   ├── services/        # Firebase auth, image picker services
+│   ├── theme/           # App theme and styling
+│   └── widgets/         # Reusable UI components
+├── screens/
+│   ├── auth/            # Login, signup screens
+│   ├── home/            # Home dashboard
+│   ├── scan/            # Scanning functionality
+│   ├── profile/         # User profile and settings
+│   ├── history/         # Scan history
+│   ├── onboarding/      # Onboarding flow
+│   └── splash/          # Splash screen
+└── main.dart            # App entry point
+```
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Flutter](https://flutter.dev)
+- **Backend**: [Firebase](https://firebase.google.com)
+  - Authentication (Google Sign-In)
+  - Cloud Firestore (user data storage)
+- **State Management**: [Provider](https://pub.dev/packages/provider)
+- **Image Processing**: Image Picker, File Picker
+- **UI Components**: Custom glassmorphism widgets
+
+## 📦 Dependencies
+
+Key packages used in this project:
+
+- `firebase_core` - Firebase initialization
+- `firebase_auth` - User authentication
+- `cloud_firestore` - Database
+- `google_sign_in` - Google authentication
+- `provider` - State management
+- `shared_preferences` - Local storage
+- `image_picker` - Image selection
+- `file_picker` - File selection
+
+See [pubspec.yaml](pubspec.yaml) for the complete list.
+
+## 🔧 Configuration
+
+### Firebase Setup
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication with Google Sign-In provider
+3. Create a Firestore database
+4. Run `flutterfire configure` to link your project
+
+### Environment Variables
+
+No additional environment variables are required. All configuration is handled through Firebase configuration files generated by FlutterFire CLI.
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+flutter test
+
+# Run tests with coverage
+flutter test --coverage
+```
+
+## 📝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Flutter team for the amazing framework
+- Firebase for backend services
+- All contributors and users of CleanBite
+
+## 📞 Support
+
+For support, email support@cleanbite.app or open an issue in this repository.
+
+## 🗺️ Roadmap
+
+- [ ] Barcode database integration
+- [ ] Advanced OCR for ingredient recognition
+- [ ] Multi-language support
+- [ ] Offline mode
+- [ ] Recipe suggestions based on dietary preferences
+- [ ] Social sharing features
+- [ ] Nutrition information display
+
+---
+
+<div align="center">
+
+Made with ❤️ using Flutter
+
+⭐ Star this repo if you find it helpful!
+
+</div>
