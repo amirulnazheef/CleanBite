@@ -1,0 +1,47 @@
+name: cleanbite
+description: "CleanBite - AI-powered food scanner for dietary classification and allergen detection"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Firebase & Auth
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.6.0
+  google_sign_in: ^6.2.2
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # Local Storage (for caching)
+  shared_preferences: ^2.3.4
+  
+  # Image Picker (works on mobile)
+  image_picker: ^1.0.7
+  # File Picker (better web support)
+  file_picker: ^8.1.4
+  
+  # Future packages for full implementation:
+  # camera: ^0.10.5+9           # Camera access
+  # mobile_scanner: ^5.1.1       # Barcode scanning
+  # image_picker: ^1.0.7         # Gallery image selection
+  # google_mlkit_text_recognition: ^0.11.0  # OCR
+  # permission_handler: ^11.3.0  # Camera permissions
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # Assets
+  assets:
+    - assets/images/

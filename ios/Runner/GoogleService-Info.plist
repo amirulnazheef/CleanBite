@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1033859196736-icdemd6p8q2ndbco7thvt3q9o68eu3eq.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1033859196736-icdemd6p8q2ndbco7thvt3q9o68eu3eq</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCcwYfDyQlFnlaNEASlsk_QUz1uz5GVkmA</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1033859196736</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.cursorCleanbite</string>
+	<key>PROJECT_ID</key>
+	<string>cleanbite-firebase</string>
+	<key>STORAGE_BUCKET</key>
+	<string>cleanbite-firebase.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1033859196736:ios:367cb6f1ba990aa75dfca5</string>
+</dict>
+</plist>
