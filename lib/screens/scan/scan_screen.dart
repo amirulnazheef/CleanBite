@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/services/image_picker_service.dart';
+import '../../core/services/backend_service.dart';
 
 /// Simplified Scan Screen with two main options
 class ScanScreen extends StatelessWidget {
@@ -318,40 +321,161 @@ class ScanScreen extends StatelessWidget {
   }
 
   Future<void> _pickImage(BuildContext context, {required bool isBarcode}) async {
+    debugPrint('🔍 _pickImage called - isBarcode: $isBarcode');
+    
+    // Show loading indicator
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Selecting image...'),
+            ],
+          ),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+
+    debugPrint('📸 About to call ImagePickerService');
     final result = await ImagePickerService().pickFromGallery(
       maxWidth: 1920,
       maxHeight: 1920,
       imageQuality: 85,
     );
+    debugPrint('📸 ImagePickerService returned: ${result != null}');
 
-    if (result != null && context.mounted) {
-      // Show success message
+    if (result == null || result.path == null) {
+      debugPrint('❌ No image selected');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No image selected'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    final path = result.path!;
+    debugPrint('✅ Image selected: $path');
+
+    // Show processing indicator
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Image selected: ${result.name ?? "image"}'),
-          backgroundColor: AppTheme.success,
-          duration: const Duration(seconds: 1),
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Processing image...'),
+            ],
+          ),
+          duration: Duration(minutes: 1),
         ),
       );
+    }
+
+    try {
+      // Prepare file for backend based on platform
+      dynamic fileForBackend;
+      String? fileName = result.name;
+
+      if (kIsWeb) {
+        fileForBackend = result.bytes;
+        debugPrint('🌐 Web platform - bytes: ${result.bytes?.length}');
+      } else {
+        fileForBackend = File(path);
+        debugPrint('📱 Mobile platform - file: $path');
+      }
+
+      debugPrint('🚀 Creating BackendService instance');
+      final backend = BackendService();
       
-      // Navigate to processing screen with image data
-      Navigator.of(context).pushNamed(
-        AppRoutes.processing,
-        arguments: {
-          'type': isBarcode ? 'barcode' : 'ingredients',
-          'source': 'gallery',
-          'imagePath': result.path,
-          'imageBytes': result.bytes,
-          'imageName': result.name,
-        },
+      debugPrint('🚀 Calling backend.processImage()');
+      final response = await backend.processImage(
+        fileForBackend,
+        fileName: fileName,
       );
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('No image selected'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      debugPrint('📥 Backend response received: ${response != null}');
+      if (response != null) {
+        debugPrint('📥 Response keys: ${response.keys}');
+        debugPrint('📥 Response status: ${response['status']}');
+      }
+
+      // Hide loading snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+
+      if (response != null && context.mounted) {
+        debugPrint('✅ Navigating to processing screen');
+        // Success - navigate to processing/results screen
+        Navigator.of(context).pushNamed(
+          AppRoutes.processing,
+          arguments: {
+            'type': isBarcode ? 'barcode' : 'ingredients',
+            'source': 'gallery',
+            'imagePath': path,
+            'imageBytes': result.bytes,
+            'imageName': result.name,
+            'backendResponse': response,
+          },
+        );
+      } else if (context.mounted) {
+        debugPrint('❌ Backend returned null');
+        // Backend returned null - show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to process image. Please try again.'),
+            backgroundColor: AppTheme.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                _pickImage(context, isBarcode: isBarcode);
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Exception in _pickImage: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Exception occurred
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                _pickImage(context, isBarcode: isBarcode);
+              },
+            ),
+          ),
+        );
+      }
     }
   }
 

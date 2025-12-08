@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gradient_background.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/services/firebase_auth_service.dart';
 
 class ProcessingScreen extends StatefulWidget {
   final Map<String, dynamic>? scanData;
@@ -48,10 +49,11 @@ class _ProcessingScreenState extends State<ProcessingScreen>
       vsync: this,
     )..repeat();
 
-    _simulateProcessing();
+    _processBackendResponse();
   }
 
-  Future<void> _simulateProcessing() async {
+  Future<void> _processBackendResponse() async {
+    // Simulate processing steps with animation
     for (int i = 0; i < _steps.length; i++) {
       await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
@@ -61,24 +63,134 @@ class _ProcessingScreenState extends State<ProcessingScreen>
       }
     }
 
-    // Navigate to results after processing
     await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
+    
+    if (!mounted) return;
+
+    // Get the backend response from scanData
+    final backendResponse = widget.scanData?['backendResponse'] as Map<String, dynamic>?;
+    
+    if (backendResponse == null) {
+      _showError('No response from backend. Please try again.');
+      return;
+    }
+
+    // Check if backend returned success
+    if (backendResponse['status'] != 'success') {
+      _showError('Failed to process image. Please try again.');
+      return;
+    }
+
+    try {
+      // Extract data from backend response
+      final ingredients = backendResponse['ingredients'] as List<dynamic>? ?? [];
+      final classification = backendResponse['product_classification'] as Map<String, dynamic>?;
+      
+      // Get user's dietary preferences
+      final userPrefs = FirebaseAuthService().userData?.dietaryPreferences;
+      final userDiets = <String>[];
+      if (userPrefs?.halal == true) userDiets.add('halal');
+      if (userPrefs?.kosher == true) userDiets.add('kosher');
+      if (userPrefs?.vegan == true) userDiets.add('vegan');
+      if (userPrefs?.vegetarian == true) userDiets.add('vegetarian');
+      
+      // Determine overall classification
+      String overallClassification = 'unknown';
+      if (classification != null) {
+        // Check which dietary types are TRUE (product meets that requirement)
+        List<String> compatibleTypes = [];
+        if (classification['halal'] == true) compatibleTypes.add('halal');
+        if (classification['kosher'] == true) compatibleTypes.add('kosher');
+        if (classification['vegan'] == true) compatibleTypes.add('vegan');
+        if (classification['vegetarian'] == true) compatibleTypes.add('vegetarian');
+        
+        // Prioritize: vegan > vegetarian > halal > kosher
+        if (compatibleTypes.contains('vegan')) {
+          overallClassification = 'vegan';
+        } else if (compatibleTypes.contains('vegetarian')) {
+          overallClassification = 'vegetarian';
+        } else if (compatibleTypes.contains('halal')) {
+          overallClassification = 'halal';
+        } else if (compatibleTypes.contains('kosher')) {
+          overallClassification = 'kosher';
+        } else {
+          // None are true - product is not compatible with any diet
+          overallClassification = 'haram';
+        }
+      }
+
+      // Format ingredients with proper status based on user's dietary choices
+      final formattedIngredients = ingredients.map((ing) {
+        String name;
+        Map<String, dynamic> dietaryInfo = {};
+        
+        // Extract name and dietary info from ingredient object
+        if (ing is Map<String, dynamic>) {
+          name = ing['name']?.toString() ?? '';
+          dietaryInfo = {
+            'halal': ing['halal'] ?? false,
+            'kosher': ing['kosher'] ?? false,
+            'vegan': ing['vegan'] ?? false,
+            'vegetarian': ing['vegetarian'] ?? false,
+          };
+        } else {
+          name = ing.toString();
+        }
+        
+        // Determine status based on user's dietary preferences
+        String status = 'safe';
+        List<String> restrictedFor = [];
+        
+        if (userDiets.isNotEmpty) {
+          for (String diet in userDiets) {
+            if (dietaryInfo[diet] == false) {
+              status = 'restricted';
+              restrictedFor.add(diet);
+            }
+          }
+        }
+        
+        return {
+          'name': name,
+          'status': status,
+          'restrictedFor': restrictedFor.join(', '),
+          'dietaryInfo': dietaryInfo,
+        };
+      }).toList();
+
+      // Navigate to results
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.result,
         arguments: {
-          'productName': 'Sample Product',
-          'classification': 'halal',
-          'ingredients': [
-            {'name': 'Water', 'status': 'safe'},
-            {'name': 'Sugar', 'status': 'safe'},
-            {'name': 'Natural Flavors', 'status': 'doubtful'},
-            {'name': 'Citric Acid', 'status': 'safe'},
-            {'name': 'Sodium Benzoate', 'status': 'safe'},
-          ],
+          'productName': 'Scanned Product',
+          'classification': overallClassification,
+          'ingredients': formattedIngredients,
         },
       );
+    } catch (e) {
+      _showError('Error processing data: ${e.toString()}');
     }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -91,7 +203,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: GradientBackground(
-        child: Center(
+        child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(40),
             child: Column(
@@ -226,4 +338,3 @@ class ProcessingStep {
     required this.icon,
   });
 }
-

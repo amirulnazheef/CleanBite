@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/services/image_picker_service.dart';
+import '../../core/services/backend_service.dart';
 
 class IngredientScannerScreen extends StatefulWidget {
   const IngredientScannerScreen({super.key});
@@ -14,6 +17,7 @@ class _IngredientScannerScreenState extends State<IngredientScannerScreen> {
   bool _flashOn = false;
   bool _photoTaken = false;
   ImagePickerResult? _capturedImage;
+  bool _isProcessing = false;
 
   void _takePhoto() {
     setState(() {
@@ -28,28 +32,134 @@ class _IngredientScannerScreenState extends State<IngredientScannerScreen> {
     });
   }
 
-  void _usePhoto() {
-    if (_capturedImage != null) {
-      Navigator.of(context).pushNamed(
-        AppRoutes.processing,
-        arguments: {
-          'type': 'ingredients',
-          'source': 'gallery',
-          'imagePath': _capturedImage!.path,
-          'imageBytes': _capturedImage!.bytes,
-          'imageName': _capturedImage!.name,
-          'data': 'Sample ingredients: Water, Sugar, Salt, Natural Flavors, Citric Acid, Sodium Benzoate',
-        },
+  Future<void> _usePhoto() async {
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Processing image...'),
+            ],
+          ),
+          duration: Duration(minutes: 1),
+        ),
       );
-    } else {
-      Navigator.of(context).pushNamed(
-        AppRoutes.processing,
-        arguments: {
-          'type': 'ingredients',
-          'source': 'camera',
-          'data': 'Sample ingredients: Water, Sugar, Salt, Natural Flavors, Citric Acid, Sodium Benzoate',
-        },
+    }
+
+    try {
+      // Prepare file for backend
+      dynamic fileForBackend;
+      String? fileName;
+
+      if (_capturedImage != null) {
+        fileName = _capturedImage!.name;
+        if (kIsWeb) {
+          fileForBackend = _capturedImage!.bytes;
+          debugPrint('🌐 Web platform - bytes: ${_capturedImage!.bytes?.length}');
+        } else {
+          fileForBackend = File(_capturedImage!.path!);
+          debugPrint('📱 Mobile platform - file: ${_capturedImage!.path}');
+        }
+      } else {
+        // No actual photo taken (camera simulation)
+        if (mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select an image from gallery or implement camera functionality'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      debugPrint('🚀 Creating BackendService instance');
+      final backend = BackendService();
+      
+      debugPrint('🚀 Calling backend.processImage()');
+      final response = await backend.processImage(
+        fileForBackend,
+        fileName: fileName,
       );
+      debugPrint('📥 Backend response received: ${response != null}');
+      if (response != null) {
+        debugPrint('📥 Response status: ${response['status']}');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+
+      if (response != null && mounted) {
+        debugPrint('✅ Navigating to processing screen');
+        Navigator.of(context).pushNamed(
+          AppRoutes.processing,
+          arguments: {
+            'type': 'ingredients',
+            'source': _capturedImage != null ? 'gallery' : 'camera',
+            'imagePath': _capturedImage?.path,
+            'imageBytes': _capturedImage?.bytes,
+            'imageName': _capturedImage?.name,
+            'backendResponse': response,
+          },
+        );
+      } else if (mounted) {
+        debugPrint('❌ Backend returned null');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to process image. Please try again.'),
+            backgroundColor: AppTheme.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _usePhoto,
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Exception in _usePhoto: $e');
+      debugPrint('Stack trace: $stackTrace');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _usePhoto,
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
@@ -194,14 +304,14 @@ class _IngredientScannerScreenState extends State<IngredientScannerScreen> {
                         _buildActionButton(
                           icon: Icons.refresh,
                           label: 'Retake',
-                          onTap: _retakePhoto,
+                          onTap: _isProcessing ? () {} : _retakePhoto,
                           isOutlined: true,
                         ),
                         const SizedBox(width: 20),
                         _buildActionButton(
-                          icon: Icons.check,
-                          label: 'Use Photo',
-                          onTap: _usePhoto,
+                          icon: _isProcessing ? Icons.hourglass_empty : Icons.check,
+                          label: _isProcessing ? 'Processing...' : 'Use Photo',
+                          onTap: _isProcessing ? () {} : _usePhoto,
                           isOutlined: false,
                         ),
                       ],

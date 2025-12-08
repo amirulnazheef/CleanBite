@@ -11,8 +11,8 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productName = resultData?['productName'] ?? 'Unknown Product';
-    final classification = resultData?['classification'] ?? 'halal';
+    final productName = resultData?['productName']?.toString() ?? 'Unknown Product';
+    final classification = resultData?['classification']?.toString() ?? 'halal';
     final ingredients = resultData?['ingredients'] as List<dynamic>? ?? [];
 
     return Scaffold(
@@ -137,9 +137,10 @@ class ResultScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     ...ingredients.map((ingredient) {
-                      final name = ingredient['name'] ?? '';
-                      final status = ingredient['status'] ?? 'safe';
-                      return _buildIngredientCard(context, name, status);
+                      final name = ingredient['name']?.toString() ?? '';
+                      final status = ingredient['status']?.toString() ?? 'safe';
+                      final restrictedFor = ingredient['restrictedFor']?.toString() ?? '';
+                      return _buildIngredientCard(context, name, status, restrictedFor);
                     }),
                     const SizedBox(height: 24),
                     // Disclaimer
@@ -211,7 +212,7 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIngredientCard(BuildContext context, String name, String status) {
+  Widget _buildIngredientCard(BuildContext context, String name, String status, String restrictedFor) {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushNamed(
@@ -228,6 +229,12 @@ class ResultScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.surfaceWhite,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: status == 'restricted' 
+                ? AppTheme.error.withOpacity(0.3)
+                : AppTheme.inputBorder.withOpacity(0.1),
+            width: status == 'restricted' ? 2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.03),
@@ -267,7 +274,9 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _getStatusLabel(status),
+                    status == 'restricted' && restrictedFor.isNotEmpty
+                        ? 'Not suitable for: $restrictedFor'
+                        : _getStatusLabel(status),
                     style: TextStyle(
                       fontSize: 12,
                       color: _getStatusColor(status),
@@ -386,4 +395,3 @@ class ResultScreen extends StatelessWidget {
     }
   }
 }
-
