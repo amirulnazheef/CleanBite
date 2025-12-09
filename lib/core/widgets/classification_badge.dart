@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 enum ClassificationType {
-  halal,
-  haram,
-  shubhah,
+  safeToConsume,
+  avoid,
+  doubtful,
   vegan,
   vegetarian,
   kosher,
@@ -56,11 +56,11 @@ class ClassificationBadge extends StatelessWidget {
 
   Color _getBackgroundColor() {
     switch (type) {
-      case ClassificationType.halal:
+      case ClassificationType.safeToConsume:
         return AppTheme.halalGreen;
-      case ClassificationType.haram:
+      case ClassificationType.avoid:
         return AppTheme.haramRed;
-      case ClassificationType.shubhah:
+      case ClassificationType.doubtful:
         return AppTheme.shubhahOrange;
       case ClassificationType.vegan:
         return AppTheme.veganGreen;
@@ -75,11 +75,11 @@ class ClassificationBadge extends StatelessWidget {
 
   IconData _getIcon() {
     switch (type) {
-      case ClassificationType.halal:
+      case ClassificationType.safeToConsume:
         return Icons.check_circle;
-      case ClassificationType.haram:
+      case ClassificationType.avoid:
         return Icons.cancel;
-      case ClassificationType.shubhah:
+      case ClassificationType.doubtful:
         return Icons.help_outline;
       case ClassificationType.vegan:
         return Icons.eco;
@@ -94,11 +94,11 @@ class ClassificationBadge extends StatelessWidget {
 
   String _getLabel() {
     switch (type) {
-      case ClassificationType.halal:
-        return 'Halal';
-      case ClassificationType.haram:
-        return 'Haram';
-      case ClassificationType.shubhah:
+      case ClassificationType.safeToConsume:
+        return 'Safe to Consume';
+      case ClassificationType.avoid:
+        return 'Avoid';
+      case ClassificationType.doubtful:
         return 'Doubtful';
       case ClassificationType.vegan:
         return 'Vegan';

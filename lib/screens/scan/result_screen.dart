@@ -12,8 +12,13 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productName = resultData?['productName']?.toString() ?? 'Unknown Product';
-    final classification = resultData?['classification']?.toString() ?? 'halal';
     final ingredients = resultData?['ingredients'] as List<dynamic>? ?? [];
+    
+    // Calculate classification based on ingredient statuses
+    final classification = _calculateOverallClassification(
+      resultData?['classification']?.toString() ?? 'safe to consume',
+      ingredients,
+    );
 
     return Scaffold(
       body: GradientBackground(
@@ -298,12 +303,15 @@ class ResultScreen extends StatelessWidget {
 
   Color _getClassificationColor(String classification) {
     switch (classification.toLowerCase()) {
-      case 'halal':
+      case 'safe to consume':
+      case 'safe':
+      case 'halal': // Backward compatibility
         return AppTheme.halalGreen;
-      case 'haram':
+      case 'avoid':
+      case 'haram': // Backward compatibility
         return AppTheme.haramRed;
-      case 'shubhah':
       case 'doubtful':
+      case 'shubhah': // Backward compatibility
         return AppTheme.shubhahOrange;
       case 'vegan':
         return AppTheme.veganGreen;
@@ -315,15 +323,17 @@ class ResultScreen extends StatelessWidget {
         return AppTheme.primaryOrange;
     }
   }
-
   IconData _getClassificationIcon(String classification) {
     switch (classification.toLowerCase()) {
-      case 'halal':
+      case 'safe to consume':
+      case 'safe':
+      case 'halal': // Backward compatibility
         return Icons.check_circle;
-      case 'haram':
+      case 'avoid':
+      case 'haram': // Backward compatibility
         return Icons.cancel;
-      case 'shubhah':
       case 'doubtful':
+      case 'shubhah': // Backward compatibility
         return Icons.help_outline;
       case 'vegan':
         return Icons.eco;
@@ -338,13 +348,16 @@ class ResultScreen extends StatelessWidget {
 
   ClassificationType _getClassificationType(String classification) {
     switch (classification.toLowerCase()) {
-      case 'halal':
-        return ClassificationType.halal;
-      case 'haram':
-        return ClassificationType.haram;
-      case 'shubhah':
+      case 'safe to consume':
+      case 'safe':
+      case 'halal': // Backward compatibility
+        return ClassificationType.safeToConsume;
+      case 'avoid':
+      case 'haram': // Backward compatibility
+        return ClassificationType.avoid;
       case 'doubtful':
-        return ClassificationType.shubhah;
+      case 'shubhah': // Backward compatibility
+        return ClassificationType.doubtful;
       case 'vegan':
         return ClassificationType.vegan;
       case 'vegetarian':
@@ -352,7 +365,7 @@ class ResultScreen extends StatelessWidget {
       case 'kosher':
         return ClassificationType.kosher;
       default:
-        return ClassificationType.halal;
+        return ClassificationType.safeToConsume;
     }
   }
 
@@ -392,6 +405,38 @@ class ResultScreen extends StatelessWidget {
         return 'Not recommended';
       default:
         return 'Unknown status';
+    }
+  }
+
+  /// Calculate overall product classification based on ingredient statuses
+  /// Priority: restricted > doubtful > safe
+  String _calculateOverallClassification(String backendClassification, List<dynamic> ingredients) {
+    bool hasRestricted = false;
+    bool hasDoubtful = false;
+    
+    for (var ingredient in ingredients) {
+      final status = ingredient['status']?.toString().toLowerCase() ?? 'safe';
+      
+      if (status == 'restricted') {
+        hasRestricted = true;
+        break; // No need to check further, restricted is highest priority
+      } else if (status == 'doubtful') {
+        hasDoubtful = true;
+      }
+    }
+    
+    // Determine classification based on ingredient statuses
+    if (hasRestricted) {
+      return 'avoid';
+    } else if (hasDoubtful) {
+      return 'doubtful';
+    } else {
+      // If all ingredients are safe, use backend classification or default to safe
+      final backendClass = backendClassification.toLowerCase();
+      if (backendClass == 'halal' || backendClass == 'safe' || backendClass == 'safe to consume') {
+        return 'safe to consume';
+      }
+      return backendClassification;
     }
   }
 }
