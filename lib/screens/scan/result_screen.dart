@@ -12,13 +12,18 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productName = resultData?['productName']?.toString() ?? 'Unknown Product';
-    final ingredients = resultData?['ingredients'] as List<dynamic>? ?? [];
-    
-    // Calculate classification based on ingredient statuses
+    final ingredients = _normalizeIngredients(resultData?['ingredients']);
+    final classificationFlags =
+        (resultData?['classificationMap'] as Map<String, dynamic>?) ?? {};
     final classification = _calculateOverallClassification(
-      resultData?['classification']?.toString() ?? 'safe to consume',
+      resultData?['classification']?.toString(),
       ingredients,
+      classificationFlags,
     );
+    final dietarySummary = resultData?['dietarySummary']?.toString();
+    final allergens = _normalizeStringList(resultData?['allergens']);
+    final facts = _normalizeFacts(resultData?['facts']);
+    final usedAI = resultData?['usedAI'] == true;
 
     return Scaffold(
       body: GradientBackground(
@@ -114,6 +119,10 @@ class ResultScreen extends StatelessWidget {
                     type: _getClassificationType(classification),
                     isLarge: true,
                   ),
+                  if (usedAI) ...[
+                    const SizedBox(height: 10),
+                    _buildAiBadge(),
+                  ],
                 ],
               ),
             ),
@@ -124,6 +133,18 @@ class ResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (dietarySummary != null && dietarySummary.isNotEmpty) ...[
+                      _buildSummaryCard(dietarySummary),
+                      const SizedBox(height: 16),
+                    ],
+                    if (classificationFlags.isNotEmpty) ...[
+                      _buildDietaryFlags(classificationFlags),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildAllergenSection(allergens),
+                    const SizedBox(height: 16),
+                    _buildFactsSection(facts),
+                    const SizedBox(height: 20),
                     Text(
                       'Ingredients',
                       style: TextStyle(
@@ -217,6 +238,353 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAiBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryOrange.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryOrange.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.auto_awesome,
+            color: AppTheme.primaryOrange,
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'AI-assisted result',
+            style: TextStyle(
+              color: AppTheme.primaryOrange,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(String summary) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.description_outlined,
+            color: AppTheme.primaryOrange,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dietary summary',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  summary,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textMuted,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDietaryFlags(Map<String, dynamic> flags) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.inputBorder.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.restaurant_menu,
+                color: AppTheme.primaryOrange,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Dietary compatibility',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFlagChip(
+                'Halal',
+                flags['halal'] == true,
+                Icons.mosque,
+                AppTheme.halalGreen,
+              ),
+              _buildFlagChip(
+                'Kosher',
+                flags['kosher'] == true,
+                Icons.star_outline,
+                AppTheme.kosherBlue,
+              ),
+              _buildFlagChip(
+                'Vegan',
+                flags['vegan'] == true,
+                Icons.eco,
+                AppTheme.veganGreen,
+              ),
+              _buildFlagChip(
+                'Vegetarian',
+                flags['vegetarian'] == true,
+                Icons.grass,
+                AppTheme.vegetarianGreen,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlagChip(
+    String label,
+    bool isCompatible,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isCompatible
+            ? color.withOpacity(0.12)
+            : AppTheme.inputBorder.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCompatible
+              ? color.withOpacity(0.4)
+              : AppTheme.inputBorder.withOpacity(0.4),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isCompatible ? icon : Icons.remove,
+            size: 16,
+            color: isCompatible ? color : AppTheme.textMuted,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isCompatible ? color : AppTheme.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllergenSection(List<String> allergens) {
+    final hasAllergens = allergens.isNotEmpty;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.inputBorder.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.warning_amber_outlined,
+                color: hasAllergens ? AppTheme.error : AppTheme.textMuted,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Allergens reported',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasAllergens)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: allergens
+                  .map(
+                    (allergen) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.error.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: AppTheme.error,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            allergen,
+                            style: TextStyle(
+                              color: AppTheme.error,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            )
+          else
+            Text(
+              'No allergens flagged by the backend for this product.',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 13,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFactsSection(List<String> facts) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.inputBorder.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.fact_check_outlined,
+                color: AppTheme.primaryOrange,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Facts from backend',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (facts.isEmpty)
+            Text(
+              'No additional facts provided.',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 13,
+              ),
+            )
+          else
+            ...facts.map(_buildBulletRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulletRow(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryOrange,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildIngredientCard(BuildContext context, String name, String status, String restrictedFor) {
     return GestureDetector(
       onTap: () {
@@ -299,6 +667,44 @@ class ResultScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Map<String, String>> _normalizeIngredients(dynamic raw) {
+    if (raw is! List) return [];
+
+    return raw.map<Map<String, String>>((item) {
+      if (item is Map<String, dynamic>) {
+        return {
+          'name': item['name']?.toString() ?? '',
+          'status': item['status']?.toString() ?? 'safe',
+          'restrictedFor': item['restrictedFor']?.toString() ?? '',
+        };
+      }
+      return {
+        'name': item.toString(),
+        'status': 'safe',
+        'restrictedFor': '',
+      };
+    }).toList();
+  }
+
+  List<String> _normalizeStringList(dynamic value) {
+    if (value is! List) return [];
+    return value.map((e) => e.toString()).toList();
+  }
+
+  List<String> _normalizeFacts(dynamic raw) {
+    if (raw is Map) {
+      return raw.entries
+          .map((entry) => '${entry.key}: ${entry.value}')
+          .toList()
+          .cast<String>();
+    }
+    if (raw is List) {
+      return raw.map((e) => e.toString()).toList();
+    }
+    if (raw != null) return [raw.toString()];
+    return [];
   }
 
   Color _getClassificationColor(String classification) {
@@ -410,7 +816,11 @@ class ResultScreen extends StatelessWidget {
 
   /// Calculate overall product classification based on ingredient statuses
   /// Priority: restricted > doubtful > safe
-  String _calculateOverallClassification(String backendClassification, List<dynamic> ingredients) {
+  String _calculateOverallClassification(
+    String? backendClassification,
+    List<Map<String, String>> ingredients,
+    Map<String, dynamic> flags,
+  ) {
     bool hasRestricted = false;
     bool hasDoubtful = false;
     
@@ -431,12 +841,22 @@ class ResultScreen extends StatelessWidget {
     } else if (hasDoubtful) {
       return 'doubtful';
     } else {
-      // If all ingredients are safe, use backend classification or default to safe
-      final backendClass = backendClassification.toLowerCase();
-      if (backendClass == 'halal' || backendClass == 'safe' || backendClass == 'safe to consume') {
-        return 'safe to consume';
+      // If all ingredients are safe, rely on backend classification or compatibility flags
+      final backendClass = backendClassification?.trim().toLowerCase() ?? '';
+      if (backendClass.isNotEmpty) {
+        return backendClassification!.trim();
       }
-      return backendClassification;
+
+      final vegan = flags['vegan'] == true;
+      final vegetarian = flags['vegetarian'] == true;
+      final halal = flags['halal'] == true;
+      final kosher = flags['kosher'] == true;
+
+      if (vegan) return 'vegan';
+      if (vegetarian) return 'vegetarian';
+      if (halal) return 'halal';
+      if (kosher) return 'kosher';
+      return 'safe to consume';
     }
   }
 }

@@ -82,94 +82,94 @@ class _ProcessingScreenState extends State<ProcessingScreen>
     }
 
     try {
-      // Extract data from backend response
-      final ingredients = backendResponse['ingredients'] as List<dynamic>? ?? [];
-      final classification = backendResponse['product_classification'] as Map<String, dynamic>?;
-      
-      // Get user's dietary preferences
-      final userPrefs = FirebaseAuthService().userData?.dietaryPreferences;
-      final userDiets = <String>[];
-      if (userPrefs?.halal == true) userDiets.add('halal');
-      if (userPrefs?.kosher == true) userDiets.add('kosher');
-      if (userPrefs?.vegan == true) userDiets.add('vegan');
-      if (userPrefs?.vegetarian == true) userDiets.add('vegetarian');
-      
-      // Determine overall classification
-      String overallClassification = 'unknown';
-      if (classification != null) {
-        // Check which dietary types are TRUE (product meets that requirement)
-        List<String> compatibleTypes = [];
-        if (classification['halal'] == true) compatibleTypes.add('halal');
-        if (classification['kosher'] == true) compatibleTypes.add('kosher');
-        if (classification['vegan'] == true) compatibleTypes.add('vegan');
-        if (classification['vegetarian'] == true) compatibleTypes.add('vegetarian');
-        
-        // Prioritize: vegan > vegetarian > halal > kosher
-        if (compatibleTypes.contains('vegan')) {
-          overallClassification = 'vegan';
-        } else if (compatibleTypes.contains('vegetarian')) {
-          overallClassification = 'vegetarian';
-        } else if (compatibleTypes.contains('halal')) {
-          overallClassification = 'halal';
-        } else if (compatibleTypes.contains('kosher')) {
-          overallClassification = 'kosher';
-        } else {
-          // None are true - product is not compatible with any diet
-          overallClassification = 'haram';
-        }
-      }
+      // Extract data from backend response (new format)
+      final productName = backendResponse['productName']?.toString() ?? 'Scanned Product';
+      final classification = backendResponse['classification'] as Map<String, dynamic>?;
+      final formattedIngredients = _normalizeIngredients(backendResponse['ingredients']);
+      final dietarySummary = backendResponse['dietary_summary']?.toString();
+      final allergens = _normalizeStringList(backendResponse['allergens']);
 
-      // Format ingredients with proper status based on user's dietary choices
-      final formattedIngredients = ingredients.map((ing) {
-        String name;
-        Map<String, dynamic> dietaryInfo = {};
-        
-        // Extract name and dietary info from ingredient object
-        if (ing is Map<String, dynamic>) {
-          name = ing['name']?.toString() ?? '';
-          dietaryInfo = {
-            'halal': ing['halal'] ?? false,
-            'kosher': ing['kosher'] ?? false,
-            'vegan': ing['vegan'] ?? false,
-            'vegetarian': ing['vegetarian'] ?? false,
-          };
-        } else {
-          name = ing.toString();
-        }
-        
-        // Determine status based on user's dietary preferences
-        String status = 'safe';
-        List<String> restrictedFor = [];
-        
-        if (userDiets.isNotEmpty) {
-          for (String diet in userDiets) {
-            if (dietaryInfo[diet] == false) {
-              status = 'restricted';
-              restrictedFor.add(diet);
-            }
-          }
-        }
-        
-        return {
-          'name': name,
-          'status': status,
-          'restrictedFor': restrictedFor.join(', '),
-          'dietaryInfo': dietaryInfo,
-        };
-      }).toList();
+      // Determine overall classification using backend flags and ingredient statuses
+      final overallClassification = _deriveClassification(classification, formattedIngredients);
 
       // Navigate to results
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.result,
         arguments: {
-          'productName': 'Scanned Product',
+          'productName': productName,
           'classification': overallClassification,
+          'classificationMap': classification,
           'ingredients': formattedIngredients,
+          'dietarySummary': dietarySummary,
+          'allergens': allergens,
+          'facts': backendResponse['facts'],
+          'usedAI': backendResponse['used_ai'],
         },
       );
     } catch (e) {
       _showError('Error processing data: ${e.toString()}');
     }
+  }
+
+  List<Map<String, String>> _normalizeIngredients(dynamic raw) {
+    if (raw is! List) return [];
+
+    return raw.map<Map<String, String>>((ing) {
+      if (ing is Map<String, dynamic>) {
+        return {
+          'name': ing['name']?.toString() ?? '',
+          'status': ing['status']?.toString() ?? 'safe',
+          'restrictedFor': ing['restrictedFor']?.toString() ?? '',
+        };
+      }
+
+      return {
+        'name': ing.toString(),
+        'status': 'safe',
+        'restrictedFor': '',
+      };
+    }).toList();
+  }
+
+  List<String> _normalizeStringList(dynamic value) {
+    if (value is! List) return [];
+    return value.map((e) => e.toString()).toList();
+  }
+
+  String _deriveClassification(
+    Map<String, dynamic>? classificationFlags,
+    List<Map<String, String>> ingredients,
+  ) {
+    bool hasRestricted = false;
+    bool hasDoubtful = false;
+
+    for (final ing in ingredients) {
+      final status = ing['status']?.toLowerCase() ?? '';
+      if (status == 'restricted') {
+        hasRestricted = true;
+        break;
+      } else if (status == 'doubtful') {
+        hasDoubtful = true;
+      }
+    }
+
+    if (hasRestricted) return 'avoid';
+    if (hasDoubtful) return 'doubtful';
+
+    if (classificationFlags != null) {
+      final vegan = classificationFlags['vegan'] == true;
+      final vegetarian = classificationFlags['vegetarian'] == true;
+      final halal = classificationFlags['halal'] == true;
+      final kosher = classificationFlags['kosher'] == true;
+
+      if (vegan) return 'vegan';
+      if (vegetarian) return 'vegetarian';
+      if (halal) return 'halal';
+      if (kosher) return 'kosher';
+      return 'avoid'; // backend explicitly marked incompatible
+    }
+
+    return 'safe to consume';
   }
 
   void _showError(String message) {
