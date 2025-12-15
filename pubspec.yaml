@@ -20,7 +20,7 @@ dependencies:
   provider: ^6.1.2
   
   # Local Storage (for caching)
-  shared_preferences: ^2.3.4
+  shared_preferences: ^2.5.4
   
   # Image Picker (works on mobile)
   image_picker: ^1.0.7
