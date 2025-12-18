@@ -27,10 +27,9 @@ dependencies:
   # File Picker (better web support)
   file_picker: ^8.1.4
   
-  # Future packages for full implementation:
+  # Scanning
+  mobile_scanner: ^5.1.2
   # camera: ^0.10.5+9           # Camera access
-  # mobile_scanner: ^5.1.1       # Barcode scanning
-  # image_picker: ^1.0.7         # Gallery image selection
   # google_mlkit_text_recognition: ^0.11.0  # OCR
   # permission_handler: ^11.3.0  # Camera permissions
 

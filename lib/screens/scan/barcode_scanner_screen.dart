@@ -1,7 +1,13 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/services/image_picker_service.dart';
+import '../../core/services/backend_service.dart';
 
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({super.key});
@@ -14,11 +20,17 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scanLineAnimation;
+
+  final MobileScannerController _scannerController =
+      MobileScannerController();
+
   bool _flashOn = false;
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -34,20 +46,102 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
 
   @override
   void dispose() {
+    _scannerController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
-  void _simulateScan() {
-    Navigator.of(context).pushNamed(
-      AppRoutes.processing,
-      arguments: {
-        'type': 'barcode',
-        'data': '5901234123457',
-        'productName': 'Sample Product',
+  /* -------------------- BARCODE HANDLER -------------------- */
+
+  Future<void> _handleBarcode(
+    String barcode, {
+    bool fromImage = false,
+  }) async {
+    if (_isProcessing && !fromImage) return;
+    if (mounted) setState(() => _isProcessing = true);
+
+    try {
+      final product = await _fetchProductFromFirestore(barcode);
+
+      if (!mounted) return;
+
+      if (product != null) {
+        Navigator.of(context).pushNamed(
+          AppRoutes.processing,
+          arguments: {
+            'type': 'barcode',
+            'barcode': barcode,
+            'backendResponse': product, // expected to mirror backend payload shape
+          },
+        );
+      } else {
+        _showError('Product not found in database');
+      }
+    } catch (_) {
+      _showError('Failed to fetch product data');
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      } else {
+        _isProcessing = false;
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _fetchProductFromFirestore(String barcode) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('products')
+        .doc(barcode)
+        .get();
+
+    if (!doc.exists) return null;
+    final data = doc.data();
+    if (data == null) return null;
+
+    return _mapProductDocument(barcode, data);
+  }
+
+  Map<String, dynamic> _mapProductDocument(
+    String barcode,
+    Map<String, dynamic> data,
+  ) {
+    final classificationFlags = {
+      'halal': data['halal'] == true,
+      'kosher': data['kosher'] == true,
+      'vegan': data['vegan'] == true,
+      'vegetarian': data['vegetarian'] == true,
+    };
+
+    final hasAnyFlagTrue = classificationFlags.values.any((v) => v == true);
+    final flagsOrNull = hasAnyFlagTrue ? classificationFlags : null;
+
+    return {
+      'status': 'success',
+      'productName': data['productName']?.toString() ?? 'Unknown product',
+      'classification': flagsOrNull,
+      'ingredients': <Map<String, dynamic>>[],
+      'dietary_summary': data['dietarySummary']?.toString(),
+      'allergens': (data['allergens'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+      'facts': {
+        'verified': data['verified'] == true,
+        'source': 'firestore',
+        'barcode': barcode,
       },
+      'used_ai': false,
+    };
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.error,
+      ),
     );
   }
+
+  /* -------------------- GALLERY PICK -------------------- */
 
   Future<void> _pickFromGallery() async {
     final result = await ImagePickerService().pickFromGallery(
@@ -56,34 +150,57 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
       imageQuality: 85,
     );
 
-    if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Image selected: ${result.name ?? "image"}'),
-          backgroundColor: AppTheme.success,
-          duration: const Duration(seconds: 1),
-        ),
+    if (result == null || !mounted) return;
+
+    await _processBarcodeImage(result);
+  }
+
+  Future<void> _processBarcodeImage(ImagePickerResult image) async {
+    if (_isProcessing) return;
+    if (mounted) {
+      setState(() => _isProcessing = true);
+    }
+
+    try {
+      dynamic payload;
+      if (image.bytes != null) {
+        payload = Uint8List.fromList(image.bytes!);
+      } else if (image.path != null) {
+        payload = File(image.path!);
+      } else {
+        _showError('Image data unavailable');
+        return;
+      }
+
+      final backend = BackendService();
+      final resp = await backend.processImage(
+        payload,
+        fileName: image.name,
+        endpoint: '/read-barcode',
       );
-      
-      Navigator.of(context).pushNamed(
-        AppRoutes.processing,
-        arguments: {
-          'type': 'barcode',
-          'source': 'gallery',
-          'imagePath': result.path,
-          'imageBytes': result.bytes,
-          'imageName': result.name,
-        },
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('No image selected'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+
+      if (!mounted) return;
+
+      if (resp != null && resp['success'] == true && resp['barcode'] != null) {
+        final detected = resp['barcode'].toString();
+        await _handleBarcode(detected, fromImage: true);
+      } else {
+        _showError('No barcode detected in the selected image');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showError('Failed to read barcode from image');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      } else {
+        _isProcessing = false;
+      }
     }
   }
+
+  /* -------------------- UI -------------------- */
 
   @override
   Widget build(BuildContext context) {
@@ -91,37 +208,26 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Camera Preview Placeholder
-          Container(
-            color: Colors.black87,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.qr_code_scanner,
-                    size: 64,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Camera Preview\n(Add camera package for live preview)',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          /// CAMERA
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: (capture) {
+              final barcode = capture.barcodes.first;
+              final String? value = barcode.rawValue;
+
+              if (value != null) {
+                _handleBarcode(value);
+              }
+            },
           ),
-          // Scan Overlay
+
+          /// OVERLAY
           CustomPaint(
             painter: ScanOverlayPainter(),
             child: Container(),
           ),
-          // Scan Line Animation
+
+          /// SCAN LINE
           Positioned.fill(
             child: Center(
               child: SizedBox(
@@ -130,56 +236,54 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                 child: AnimatedBuilder(
                   animation: _scanLineAnimation,
                   builder: (context, child) {
-                    return Stack(
-                      children: [
-                        Positioned(
-                          top: _scanLineAnimation.value * 160,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 2,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  AppTheme.primaryOrange,
-                                  AppTheme.primaryOrange,
-                                  Colors.transparent,
-                                ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primaryOrange.withValues(alpha: 0.5),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    return Transform.translate(
+                      offset: Offset(0, _scanLineAnimation.value * 160),
+                      child: child,
                     );
                   },
+                  child: Container(
+                    height: 2,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          AppTheme.primaryOrange,
+                          AppTheme.primaryOrange,
+                          Colors.transparent,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              AppTheme.primaryOrange.withValues(alpha: 0.5),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-          // Top Bar
+
+          /// TOP BAR
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildCircleButton(
+                  _circleButton(
                     icon: Icons.close,
                     onTap: () => Navigator.of(context).pop(),
                   ),
-                  _buildCircleButton(
+                  _circleButton(
                     icon: _flashOn ? Icons.flash_on : Icons.flash_off,
                     onTap: () {
                       setState(() {
                         _flashOn = !_flashOn;
+                        _scannerController.toggleTorch();
                       });
                     },
                   ),
@@ -187,7 +291,8 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
               ),
             ),
           ),
-          // Bottom Controls
+
+          /// BOTTOM CONTROLS
           Positioned(
             bottom: 0,
             left: 0,
@@ -200,13 +305,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withValues(alpha: 0.85),
                   ],
                 ),
               ),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     'Scan Barcode',
                     style: TextStyle(
                       color: Colors.white,
@@ -216,63 +321,54 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Position the barcode within the frame',
+                    'Align barcode within the frame',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Bottom row with gallery, capture, and placeholder
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Gallery button (bottom left)
-                      _buildCircleButton(
+                      _circleButton(
                         icon: Icons.photo_library_outlined,
                         onTap: _pickFromGallery,
                       ),
                       const SizedBox(width: 40),
-                      // Capture/Scan button (center)
-                      GestureDetector(
-                        onTap: _simulateScan,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 4,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryOrange,
+                              shape: BoxShape.circle,
                             ),
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryOrange,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.qr_code_scanner,
-                                color: Colors.white,
-                                size: 32,
-                              ),
+                            child: const Icon(
+                              Icons.qr_code_scanner,
+                              color: Colors.white,
+                              size: 32,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 40),
-                      // Placeholder for symmetry
                       const SizedBox(width: 44, height: 44),
                     ],
                   ),
+
                   const SizedBox(height: 16),
-                  // Switch to ingredients scan
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pushReplacementNamed(AppRoutes.scanIngredients);
+                      Navigator.of(context)
+                          .pushReplacementNamed(AppRoutes.scanIngredients);
                     },
                     child: Text(
                       'Product not found? Scan ingredients instead',
@@ -291,7 +387,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
     );
   }
 
-  Widget _buildCircleButton({
+  Widget _circleButton({
     required IconData icon,
     required VoidCallback onTap,
   }) {
@@ -304,15 +400,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
           color: Colors.black.withValues(alpha: 0.5),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
+        child: Icon(icon, color: Colors.white),
       ),
     );
   }
 }
+
+/* -------------------- OVERLAY PAINTER -------------------- */
 
 class ScanOverlayPainter extends CustomPainter {
   @override
@@ -321,82 +415,49 @@ class ScanOverlayPainter extends CustomPainter {
       ..color = Colors.black.withValues(alpha: 0.6)
       ..style = PaintingStyle.fill;
 
-    final scanAreaWidth = 280.0;
-    final scanAreaHeight = 180.0;
-    final left = (size.width - scanAreaWidth) / 2;
-    final top = (size.height - scanAreaHeight) / 2;
-    final right = left + scanAreaWidth;
-    final bottom = top + scanAreaHeight;
+    const scanWidth = 280.0;
+    const scanHeight = 180.0;
+    final left = (size.width - scanWidth) / 2;
+    final top = (size.height - scanHeight) / 2;
+    final right = left + scanWidth;
+    final bottom = top + scanHeight;
 
-    // Draw overlay with hole
     final path = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTRB(left, top, right, bottom),
-        const Radius.circular(20),
-      ))
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(left, top, right, bottom),
+          const Radius.circular(20),
+        ),
+      )
       ..fillType = PathFillType.evenOdd;
 
     canvas.drawPath(path, paint);
 
-    // Draw corner brackets
     final bracketPaint = Paint()
       ..color = AppTheme.primaryOrange
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 4;
 
-    const cornerLength = 30.0;
+    const c = 30.0;
 
-    // Top left
-    canvas.drawLine(
-      Offset(left, top + cornerLength),
-      Offset(left, top + 10),
-      bracketPaint,
-    );
-    canvas.drawLine(
-      Offset(left, top),
-      Offset(left + cornerLength, top),
-      bracketPaint,
-    );
+    canvas.drawLine(Offset(left, top), Offset(left + c, top), bracketPaint);
+    canvas.drawLine(Offset(left, top), Offset(left, top + c), bracketPaint);
 
-    // Top right
-    canvas.drawLine(
-      Offset(right - cornerLength, top),
-      Offset(right, top),
-      bracketPaint,
-    );
-    canvas.drawLine(
-      Offset(right, top),
-      Offset(right, top + cornerLength),
-      bracketPaint,
-    );
+    canvas.drawLine(Offset(right, top), Offset(right - c, top), bracketPaint);
+    canvas.drawLine(Offset(right, top), Offset(right, top + c), bracketPaint);
 
-    // Bottom left
     canvas.drawLine(
-      Offset(left, bottom - cornerLength),
-      Offset(left, bottom),
-      bracketPaint,
-    );
+        Offset(left, bottom), Offset(left + c, bottom), bracketPaint);
     canvas.drawLine(
-      Offset(left, bottom),
-      Offset(left + cornerLength, bottom),
-      bracketPaint,
-    );
+        Offset(left, bottom), Offset(left, bottom - c), bracketPaint);
 
-    // Bottom right
     canvas.drawLine(
-      Offset(right - cornerLength, bottom),
-      Offset(right, bottom),
-      bracketPaint,
-    );
+        Offset(right, bottom), Offset(right - c, bottom), bracketPaint);
     canvas.drawLine(
-      Offset(right, bottom - cornerLength),
-      Offset(right, bottom),
-      bracketPaint,
-    );
+        Offset(right, bottom), Offset(right, bottom - c), bracketPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
