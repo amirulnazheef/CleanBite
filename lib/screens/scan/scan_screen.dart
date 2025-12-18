@@ -201,10 +201,11 @@ class ScanScreen extends StatelessWidget {
   }
 
   void _showCameraOptions(BuildContext context) {
+    final parentContext = context;
     showModalBottomSheet(
-      context: context,
+      context: parentContext,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppTheme.surfaceCream,
@@ -238,8 +239,8 @@ class ScanScreen extends StatelessWidget {
               title: 'Scan Barcode',
               subtitle: 'Scan product barcode',
               onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).pushNamed(AppRoutes.scanBarcode);
+                Navigator.pop(sheetContext);
+                Navigator.of(parentContext).pushNamed(AppRoutes.scanBarcode);
               },
             ),
             const SizedBox(height: 12),
@@ -249,8 +250,8 @@ class ScanScreen extends StatelessWidget {
               title: 'Scan Ingredients',
               subtitle: 'Take photo of ingredient list',
               onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).pushNamed(AppRoutes.scanIngredients);
+                Navigator.pop(sheetContext);
+                Navigator.of(parentContext).pushNamed(AppRoutes.scanIngredients);
               },
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
@@ -261,10 +262,11 @@ class ScanScreen extends StatelessWidget {
   }
 
   void _showUploadOptions(BuildContext context) {
+    final parentContext = context;
     showModalBottomSheet(
-      context: context,
+      context: parentContext,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppTheme.surfaceCream,
@@ -298,8 +300,8 @@ class ScanScreen extends StatelessWidget {
               title: 'Barcode Image',
               subtitle: 'Upload barcode photo from gallery',
               onTap: () {
-                Navigator.pop(context);
-                _pickImage(context, isBarcode: true);
+                Navigator.pop(sheetContext);
+                _pickImage(parentContext, isBarcode: true);
               },
             ),
             const SizedBox(height: 12),
@@ -309,8 +311,8 @@ class ScanScreen extends StatelessWidget {
               title: 'Ingredients List Image',
               subtitle: 'Upload ingredients photo from gallery',
               onTap: () {
-                Navigator.pop(context);
-                _pickImage(context, isBarcode: false);
+                Navigator.pop(sheetContext);
+                _pickImage(parentContext, isBarcode: false);
               },
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),

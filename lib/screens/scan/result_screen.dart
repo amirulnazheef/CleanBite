@@ -3,6 +3,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gradient_background.dart';
 import '../../core/widgets/classification_badge.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/services/firebase_auth_service.dart';
 
 class ResultScreen extends StatelessWidget {
   final Map<String, dynamic>? resultData;
@@ -15,10 +16,12 @@ class ResultScreen extends StatelessWidget {
     final ingredients = _normalizeIngredients(resultData?['ingredients']);
     final classificationFlags =
         (resultData?['classificationMap'] as Map<String, dynamic>?) ?? {};
+    final userPrefs = FirebaseAuthService().userData?.dietaryPreferences;
     final classification = _calculateOverallClassification(
       resultData?['classification']?.toString(),
       ingredients,
       classificationFlags,
+      userPrefs,
     );
     final dietarySummary = resultData?['dietarySummary']?.toString();
     final allergens = _normalizeStringList(resultData?['allergens']);
@@ -133,17 +136,11 @@ class ResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (dietarySummary != null && dietarySummary.isNotEmpty) ...[
-                      _buildSummaryCard(dietarySummary),
-                      const SizedBox(height: 16),
-                    ],
                     if (classificationFlags.isNotEmpty) ...[
-                      _buildDietaryFlags(classificationFlags),
+                      _buildDietaryFlags(classificationFlags, userPrefs),
                       const SizedBox(height: 16),
                     ],
                     _buildAllergenSection(allergens),
-                    const SizedBox(height: 16),
-                    _buildFactsSection(facts),
                     const SizedBox(height: 20),
                     Text(
                       'Ingredients',
@@ -166,7 +163,16 @@ class ResultScreen extends StatelessWidget {
                       final name = ingredient['name']?.toString() ?? '';
                       final status = ingredient['status']?.toString() ?? 'safe';
                       final restrictedFor = ingredient['restrictedFor']?.toString() ?? '';
-                      return _buildIngredientCard(context, name, status, restrictedFor);
+                      final filteredRestricted = _filterRestrictedFor(restrictedFor, userPrefs);
+                      final displayStatus = status == 'restricted' && filteredRestricted.isEmpty
+                          ? 'safe'
+                          : status;
+                      return _buildIngredientCard(
+                        context,
+                        name,
+                        displayStatus,
+                        filteredRestricted,
+                      );
                     }),
                     const SizedBox(height: 24),
                     // Disclaimer
@@ -319,7 +325,10 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDietaryFlags(Map<String, dynamic> flags) {
+  Widget _buildDietaryFlags(Map<String, dynamic> flags, DietaryPreferences? prefs) {
+    final selectedKeys = _selectedPreferenceKeys(prefs);
+    if (selectedKeys.isEmpty) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -352,30 +361,34 @@ class ResultScreen extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFlagChip(
-                'Halal',
-                flags['halal'] == true,
-                Icons.mosque,
-                AppTheme.halalGreen,
-              ),
-              _buildFlagChip(
-                'Kosher',
-                flags['kosher'] == true,
-                Icons.star_outline,
-                AppTheme.kosherBlue,
-              ),
-              _buildFlagChip(
-                'Vegan',
-                flags['vegan'] == true,
-                Icons.eco,
-                AppTheme.veganGreen,
-              ),
-              _buildFlagChip(
-                'Vegetarian',
-                flags['vegetarian'] == true,
-                Icons.grass,
-                AppTheme.vegetarianGreen,
-              ),
+              if (selectedKeys.contains('halal'))
+                _buildFlagChip(
+                  'Halal',
+                  flags['halal'] == true,
+                  Icons.mosque,
+                  AppTheme.halalGreen,
+                ),
+              if (selectedKeys.contains('kosher'))
+                _buildFlagChip(
+                  'Kosher',
+                  flags['kosher'] == true,
+                  Icons.star_outline,
+                  AppTheme.kosherBlue,
+                ),
+              if (selectedKeys.contains('vegan'))
+                _buildFlagChip(
+                  'Vegan',
+                  flags['vegan'] == true,
+                  Icons.eco,
+                  AppTheme.veganGreen,
+                ),
+              if (selectedKeys.contains('vegetarian'))
+                _buildFlagChip(
+                  'Vegetarian',
+                  flags['vegetarian'] == true,
+                  Icons.grass,
+                  AppTheme.vegetarianGreen,
+                ),
             ],
           ),
         ],
@@ -820,17 +833,21 @@ class ResultScreen extends StatelessWidget {
     String? backendClassification,
     List<Map<String, String>> ingredients,
     Map<String, dynamic> flags,
+    DietaryPreferences? prefs,
   ) {
     bool hasRestricted = false;
     bool hasDoubtful = false;
+    final selectedPrefs = _selectedPreferenceKeys(prefs);
     
     for (var ingredient in ingredients) {
       final status = ingredient['status']?.toString().toLowerCase() ?? 'safe';
+      final restrictedFor = ingredient['restrictedFor']?.toString() ?? '';
+      final appliesToPrefs = _statusAppliesToPrefs(status, restrictedFor, selectedPrefs);
       
-      if (status == 'restricted') {
+      if (status == 'restricted' && appliesToPrefs) {
         hasRestricted = true;
         break; // No need to check further, restricted is highest priority
-      } else if (status == 'doubtful') {
+      } else if (status == 'doubtful' && appliesToPrefs) {
         hasDoubtful = true;
       }
     }
@@ -841,12 +858,26 @@ class ResultScreen extends StatelessWidget {
     } else if (hasDoubtful) {
       return 'doubtful';
     } else {
-      // If all ingredients are safe, rely on backend classification or compatibility flags
+      // If all ingredients are safe, rely on user preferences and backend compatibility flags
+      final selectedPrefs = _selectedPreferenceKeys(prefs);
+      if (selectedPrefs.isNotEmpty) {
+        bool hasUnknown = false;
+        for (final key in selectedPrefs) {
+          final value = flags[key];
+          if (value == false) return 'avoid';
+          if (value != true) hasUnknown = true;
+        }
+        if (hasUnknown) return 'doubtful';
+        return 'safe to consume';
+      }
+
+      // Fallback to backend classification string or generic safe
       final backendClass = backendClassification?.trim().toLowerCase() ?? '';
       if (backendClass.isNotEmpty) {
         return backendClassification!.trim();
       }
 
+      // If no backend classification, use flags broadly as a hint
       final vegan = flags['vegan'] == true;
       final vegetarian = flags['vegetarian'] == true;
       final halal = flags['halal'] == true;
@@ -858,5 +889,57 @@ class ResultScreen extends StatelessWidget {
       if (kosher) return 'kosher';
       return 'safe to consume';
     }
+  }
+
+  List<String> _selectedPreferenceKeys(DietaryPreferences? prefs) {
+    if (prefs == null) return [];
+    final keys = <String>[];
+    if (prefs.halal) keys.add('halal');
+    if (prefs.kosher) keys.add('kosher');
+    if (prefs.vegan) keys.add('vegan');
+    if (prefs.vegetarian) keys.add('vegetarian');
+    return keys;
+  }
+
+  String _filterRestrictedFor(String restrictedFor, DietaryPreferences? prefs) {
+    if (restrictedFor.isEmpty) return '';
+    final selected = _selectedPreferenceKeys(prefs);
+    if (selected.isEmpty) return '';
+
+    final parts = restrictedFor.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+    final allowedLabels = <String>[];
+    for (final part in parts) {
+      final lower = part.toLowerCase();
+      if (lower.contains('halal') && selected.contains('halal')) allowedLabels.add(part);
+      if (lower.contains('kosher') && selected.contains('kosher')) allowedLabels.add(part);
+      if (lower.contains('vegan') && selected.contains('vegan')) allowedLabels.add(part);
+      if (lower.contains('vegetarian') && selected.contains('vegetarian')) allowedLabels.add(part);
+    }
+
+    return allowedLabels.join(', ');
+  }
+
+  bool _statusAppliesToPrefs(String status, String restrictedFor, List<String> prefs) {
+    if (prefs.isEmpty) return true; // No preference filter; treat statuses as-is
+    if (status != 'restricted' && status != 'doubtful') return false;
+    if (restrictedFor.isEmpty) return true; // Conservative if backend didn't specify
+
+    final parts = restrictedFor.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+    for (final part in parts) {
+      final key = _mapLabelToPrefKey(part);
+      if (key != null && prefs.contains(key)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String? _mapLabelToPrefKey(String label) {
+    final lower = label.toLowerCase();
+    if (lower.contains('halal')) return 'halal';
+    if (lower.contains('kosher')) return 'kosher';
+    if (lower.contains('vegan')) return 'vegan';
+    if (lower.contains('vegetarian')) return 'vegetarian';
+    return null;
   }
 }
