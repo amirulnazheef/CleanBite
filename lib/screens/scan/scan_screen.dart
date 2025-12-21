@@ -38,7 +38,7 @@ class ScanScreen extends StatelessWidget {
               description: 'Capture label with your camera',
               gradient: AppTheme.buttonGradient,
               onTap: () {
-                Navigator.of(context).pushNamed(AppRoutes.scanIngredients);
+                _showCaptureOptions(context);
               },
             ),
             const SizedBox(height: 16),
@@ -200,143 +200,107 @@ class ScanScreen extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-  void _showCameraOptions(BuildContext context) {
-    final parentContext = context;
-    showModalBottomSheet(
-      context: parentContext,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceCream,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.inputBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Scan with Camera',
-              style: AppTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'What do you want to scan?',
-              style: AppTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            _buildOptionTile(
-              context,
-              icon: Icons.qr_code,
-              title: 'Scan Barcode',
-              subtitle: 'Scan product barcode',
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(parentContext).pushNamed(AppRoutes.scanBarcode);
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildOptionTile(
-              context,
-              icon: Icons.document_scanner,
-              title: 'Scan Ingredients',
-              subtitle: 'Take photo of ingredient list',
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(parentContext).pushNamed(AppRoutes.scanIngredients);
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showUploadOptions(BuildContext context) {
-    final parentContext = context;
-    showModalBottomSheet(
-      context: parentContext,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceCream,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.inputBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Upload Image',
-              style: AppTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'What type of image are you uploading?',
-              style: AppTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            _buildOptionTile(
-              context,
-              icon: Icons.qr_code,
-              title: 'Barcode Image',
-              subtitle: 'Upload barcode photo from gallery',
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _pickImage(parentContext, isBarcode: true);
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildOptionTile(
-              context,
-              icon: Icons.list_alt,
-              title: 'Ingredients List Image',
-              subtitle: 'Upload ingredients photo from gallery',
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _pickImage(parentContext, isBarcode: false);
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickImage(BuildContext context, {required bool isBarcode}) async {
-    debugPrint('🔍 _pickImage called - isBarcode: $isBarcode');
-=======
   Future<void> _pickImage(BuildContext context) async {
-    debugPrint('🔍 _pickImage called for ingredient scan');
->>>>>>> 701b9f2 (Update UI flow and scan logic)
+    await _handleImageSelection(
+      context,
+      picker: () => ImagePickerService().pickFromGallery(
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      ),
+      selectingLabel: 'Selecting image...',
+      source: 'gallery',
+    );
+  }
+
+  Future<void> _captureImage(BuildContext context) async {
+    await _handleImageSelection(
+      context,
+      picker: () => ImagePickerService().pickFromCamera(
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      ),
+      selectingLabel: 'Opening camera...',
+      source: 'camera',
+    );
+  }
+
+  void _showCaptureOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceCream,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.inputBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Scan ingredients',
+              style: AppTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose how you want to scan',
+              style: AppTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            _buildOptionTile(
+              context,
+              icon: Icons.camera_alt_outlined,
+              title: 'Use Camera',
+              subtitle: 'Capture label photo',
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _captureImage(context);
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildOptionTile(
+              context,
+              icon: Icons.photo_library_outlined,
+              title: 'Upload from Gallery',
+              subtitle: 'Select existing photo',
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickImage(context);
+              },
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleImageSelection(
+    BuildContext context, {
+    required Future<ImagePickerResult?> Function() picker,
+    required String selectingLabel,
+    required String source,
+  }) async {
+    debugPrint('🔍 _handleImageSelection called - source: $source');
     
     // Show loading indicator
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
@@ -344,21 +308,16 @@ class ScanScreen extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              SizedBox(width: 16),
-              Text('Selecting image...'),
+              const SizedBox(width: 16),
+              Text(selectingLabel),
             ],
           ),
-          duration: Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
 
-    debugPrint('📸 About to call ImagePickerService');
-    final result = await ImagePickerService().pickFromGallery(
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
+    final result = await picker();
     debugPrint('📸 ImagePickerService returned: ${result != null}');
 
     if (result == null || result.path == null) {
@@ -439,7 +398,7 @@ class ScanScreen extends StatelessWidget {
           AppRoutes.processing,
           arguments: {
             'type': 'ingredients',
-            'source': 'gallery',
+            'source': source,
             'imagePath': path,
             'imageBytes': result.bytes,
             'imageName': result.name,
@@ -457,14 +416,19 @@ class ScanScreen extends StatelessWidget {
               label: 'Retry',
               textColor: Colors.white,
               onPressed: () {
-                _pickImage(context);
+                _handleImageSelection(
+                  context,
+                  picker: picker,
+                  selectingLabel: selectingLabel,
+                  source: source,
+                );
               },
             ),
           ),
         );
       }
     } catch (e, stackTrace) {
-      debugPrint('❌ Exception in _pickImage: $e');
+      debugPrint('❌ Exception in _handleImageSelection: $e');
       debugPrint('Stack trace: $stackTrace');
       // Exception occurred
       if (context.mounted) {
@@ -477,7 +441,12 @@ class ScanScreen extends StatelessWidget {
               label: 'Retry',
               textColor: Colors.white,
               onPressed: () {
-                _pickImage(context);
+                _handleImageSelection(
+                  context,
+                  picker: picker,
+                  selectingLabel: selectingLabel,
+                  source: source,
+                );
               },
             ),
           ),
@@ -486,7 +455,6 @@ class ScanScreen extends StatelessWidget {
     }
   }
 
-<<<<<<< HEAD
   Widget _buildOptionTile(
     BuildContext context, {
     required IconData icon,
@@ -542,6 +510,4 @@ class ScanScreen extends StatelessWidget {
       ),
     );
   }
-=======
->>>>>>> 701b9f2 (Update UI flow and scan logic)
 }

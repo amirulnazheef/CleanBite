@@ -16,27 +16,28 @@ class ResultScreen extends StatelessWidget {
     final ingredients = _normalizeIngredients(resultData?['ingredients']);
     final classificationFlags =
         (resultData?['classificationMap'] as Map<String, dynamic>?) ?? {};
-<<<<<<< HEAD
-    final userPrefs = FirebaseAuthService().userData?.dietaryPreferences;
-=======
     final allergens = _normalizeStringList(resultData?['allergens']);
     final userData = FirebaseAuthService().userData;
->>>>>>> 701b9f2 (Update UI flow and scan logic)
+    final userPrefs = userData?.dietaryPreferences;
+    final containsAnimalMeat = _containsAnimalMeat(ingredients, allergens);
+    final containsAnimalProducts = _containsAnimalProducts(ingredients, allergens);
     final classification = _calculateOverallClassification(
       ingredients,
       classificationFlags,
-<<<<<<< HEAD
-      userPrefs,
-=======
       userData,
       allergens,
->>>>>>> 701b9f2 (Update UI flow and scan logic)
+      containsAnimalMeat,
+      containsAnimalProducts,
     );
+    final adjustedFlags =
+        _adjustFlagsForClassification(classificationFlags, classification, containsAnimalMeat, containsAnimalProducts);
+    final hasPositiveDietFlag = adjustedFlags.values.whereType<bool>().any((v) => v);
     final dietarySummary = _buildDietarySummary(
       baseSummary: resultData?['dietarySummary']?.toString(),
       classification: classification,
+      containsAnimalMeat: containsAnimalMeat,
+      hasPositiveDietFlag: hasPositiveDietFlag,
     );
-    final adjustedFlags = _adjustFlagsForClassification(classificationFlags, classification);
     final facts = _normalizeFacts(resultData?['facts']);
     final usedAI = resultData?['usedAI'] == true;
 
@@ -148,17 +149,12 @@ class ResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-<<<<<<< HEAD
-                    if (classificationFlags.isNotEmpty) ...[
-                      _buildDietaryFlags(classificationFlags, userPrefs),
-=======
                     if (dietarySummary != null && dietarySummary.isNotEmpty) ...[
                       _buildSummaryCard(dietarySummary),
                       const SizedBox(height: 16),
                     ],
                     if (adjustedFlags.isNotEmpty) ...[
-                      _buildDietaryFlags(adjustedFlags),
->>>>>>> 701b9f2 (Update UI flow and scan logic)
+                      _buildDietaryFlags(adjustedFlags, userPrefs),
                       const SizedBox(height: 16),
                     ],
                     _buildAllergenSection(allergens),
@@ -347,8 +343,8 @@ class ResultScreen extends StatelessWidget {
   }
 
   Widget _buildDietaryFlags(Map<String, dynamic> flags, DietaryPreferences? prefs) {
+    if (flags.isEmpty) return const SizedBox.shrink();
     final selectedKeys = _selectedPreferenceKeys(prefs);
-    if (selectedKeys.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -382,33 +378,37 @@ class ResultScreen extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              if (selectedKeys.contains('halal'))
-                _buildFlagChip(
-                  'Halal',
-                  flags['halal'] == true,
-                  Icons.mosque,
-                  AppTheme.halalGreen,
-                ),
-              if (selectedKeys.contains('kosher'))
-                _buildFlagChip(
-                  'Kosher',
-                  flags['kosher'] == true,
-                  Icons.star_outline,
-                  AppTheme.kosherBlue,
-                ),
-              if (selectedKeys.contains('vegan'))
-                _buildFlagChip(
-                  'Vegan',
-                  flags['vegan'] == true,
-                  Icons.eco,
-                  AppTheme.veganGreen,
-                ),
-              if (selectedKeys.contains('vegetarian'))
-                _buildFlagChip(
-                  'Vegetarian',
-                  flags['vegetarian'] == true,
-                  Icons.grass,
-                  AppTheme.vegetarianGreen,
+              _buildFlagChip(
+                'Halal',
+                flags['halal'] == true,
+                Icons.mosque,
+                AppTheme.halalGreen,
+              ),
+              _buildFlagChip(
+                'Kosher',
+                flags['kosher'] == true,
+                Icons.star_outline,
+                AppTheme.kosherBlue,
+              ),
+              _buildFlagChip(
+                'Vegan',
+                flags['vegan'] == true,
+                Icons.eco,
+                AppTheme.veganGreen,
+              ),
+              _buildFlagChip(
+                'Vegetarian',
+                flags['vegetarian'] == true,
+                Icons.grass,
+                AppTheme.vegetarianGreen,
+              ),
+              if (selectedKeys.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Based on your preferences: ${selectedKeys.join(', ')}',
+                    style: AppTheme.labelSmall.copyWith(color: AppTheme.textMuted),
+                  ),
                 ),
             ],
           ),
@@ -851,30 +851,41 @@ class ResultScreen extends StatelessWidget {
   String _buildDietarySummary({
     String? baseSummary,
     required String classification,
+    required bool containsAnimalMeat,
+    required bool hasPositiveDietFlag,
   }) {
-    if (classification.toLowerCase() == 'avoid') {
+    final lowered = classification.toLowerCase();
+    if (lowered == 'avoid') {
       return 'This product is not compatible with your dietary preferences.';
     }
-    return baseSummary ?? '';
+    if (containsAnimalMeat) {
+      return 'Contains meat ingredients without verified halal or kosher sourcing.';
+    }
+    if (!hasPositiveDietFlag) {
+      return 'No dietary compatibility confirmed for this product.';
+    }
+    if (baseSummary != null && baseSummary.isNotEmpty) return baseSummary;
+    return 'Overall assessment: $classification';
   }
 
   Map<String, dynamic> _adjustFlagsForClassification(
     Map<String, dynamic> flags,
     String classification,
+    bool containsAnimalMeat,
+    bool containsAnimalProducts,
   ) {
-    if (flags.isEmpty) return {};
+    final adjusted = Map<String, dynamic>.from(flags);
+    if (adjusted.isEmpty) return adjusted;
 
-    final lowered = classification.toLowerCase();
-    // If overall result is avoid, do not show any diet as compatible.
-    if (lowered == 'avoid') {
-      return {
-        'halal': false,
-        'kosher': false,
-        'vegan': false,
-        'vegetarian': false,
-      };
+    if (containsAnimalMeat) {
+      adjusted['halal'] = false;
+      adjusted['vegan'] = false;
+      adjusted['vegetarian'] = false;
+    } else if (containsAnimalProducts) {
+      adjusted['vegan'] = false;
+      // Vegetarian diets can include dairy/eggs, so leave vegetarian flag untouched
     }
-    return flags;
+    return adjusted;
   }
 
   /// Calculate overall product classification based on ingredient statuses
@@ -882,59 +893,10 @@ class ResultScreen extends StatelessWidget {
   String _calculateOverallClassification(
     List<Map<String, String>> ingredients,
     Map<String, dynamic> flags,
-<<<<<<< HEAD
-    DietaryPreferences? prefs,
-  ) {
-    bool hasRestricted = false;
-    bool hasDoubtful = false;
-    final selectedPrefs = _selectedPreferenceKeys(prefs);
-    
-    for (var ingredient in ingredients) {
-      final status = ingredient['status']?.toString().toLowerCase() ?? 'safe';
-      final restrictedFor = ingredient['restrictedFor']?.toString() ?? '';
-      final appliesToPrefs = _statusAppliesToPrefs(status, restrictedFor, selectedPrefs);
-      
-      if (status == 'restricted' && appliesToPrefs) {
-        hasRestricted = true;
-        break; // No need to check further, restricted is highest priority
-      } else if (status == 'doubtful' && appliesToPrefs) {
-        hasDoubtful = true;
-      }
-    }
-    
-    // Determine classification based on ingredient statuses
-    if (hasRestricted) {
-      return 'avoid';
-    } else if (hasDoubtful) {
-      return 'doubtful';
-    } else {
-      // If all ingredients are safe, rely on user preferences and backend compatibility flags
-      final selectedPrefs = _selectedPreferenceKeys(prefs);
-      if (selectedPrefs.isNotEmpty) {
-        bool hasUnknown = false;
-        for (final key in selectedPrefs) {
-          final value = flags[key];
-          if (value == false) return 'avoid';
-          if (value != true) hasUnknown = true;
-        }
-        if (hasUnknown) return 'doubtful';
-        return 'safe to consume';
-      }
-
-      // Fallback to backend classification string or generic safe
-      final backendClass = backendClassification?.trim().toLowerCase() ?? '';
-      if (backendClass.isNotEmpty) {
-        return backendClassification!.trim();
-      }
-
-      // If no backend classification, use flags broadly as a hint
-      final vegan = flags['vegan'] == true;
-      final vegetarian = flags['vegetarian'] == true;
-      final halal = flags['halal'] == true;
-      final kosher = flags['kosher'] == true;
-=======
     UserData? user,
     List<String> detectedAllergens,
+    bool containsAnimalMeat,
+    bool containsAnimalProducts,
   ) {
     bool hasRestricted = false;
     bool hasDoubtful = false;
@@ -943,6 +905,8 @@ class ResultScreen extends StatelessWidget {
     bool globalRestricted = false; // applies to everyone
     bool preferenceSpecificRestricted = false;
     bool preferenceSpecificDoubtful = false;
+    bool preferenceConflict = false;
+    bool preferenceUnknown = false;
 
     final prefs = user?.dietaryPreferences;
     if (prefs != null) {
@@ -955,7 +919,17 @@ class ResultScreen extends StatelessWidget {
       userAllergens.addAll(user.customAllergens.map((a) => a.toLowerCase()));
     }
     hasAllergenPrefs = userAllergens.isNotEmpty;
->>>>>>> 701b9f2 (Update UI flow and scan logic)
+
+    // Meat present and halal/vegan/vegetarian preference enabled -> treat as conflict
+    if (containsAnimalMeat) {
+      if (prefs?.halal == true || prefs?.vegan == true || prefs?.vegetarian == true) {
+        preferenceConflict = true;
+      }
+    } else if (containsAnimalProducts) {
+      if (prefs?.vegan == true) {
+        preferenceConflict = true;
+      }
+    }
 
     // No preferences or allergens configured: user can consume everything
     if (!hasPreferences && !hasAllergenPrefs) {
@@ -996,9 +970,6 @@ class ResultScreen extends StatelessWidget {
     }
 
     // Preference alignment (halal/kosher/vegan/vegetarian)
-    bool preferenceConflict = false;
-    bool preferenceUnknown = false;
-
     void evaluatePreference(bool isEnabled, dynamic flag) {
       if (!isEnabled) return;
       if (flag == true) return;
@@ -1086,5 +1057,70 @@ class ResultScreen extends StatelessWidget {
     if (lower.contains('vegan')) return 'vegan';
     if (lower.contains('vegetarian')) return 'vegetarian';
     return null;
+  }
+
+  bool _containsAnimalMeat(
+    List<Map<String, String>> ingredients,
+    List<String> allergens,
+  ) {
+    const meatKeywords = [
+      'beef',
+      'meat',
+      'chicken',
+      'lamb',
+      'mutton',
+      'pork',
+      'gelatin',
+      'animal fat',
+      'animal',
+    ];
+
+    bool matches(String text) {
+      final lower = text.toLowerCase();
+      return meatKeywords.any((k) => lower.contains(k));
+    }
+
+    for (final ing in ingredients) {
+      final name = ing['name']?.toString() ?? '';
+      if (matches(name)) return true;
+    }
+    for (final allergen in allergens) {
+      if (matches(allergen)) return true;
+    }
+    return false;
+  }
+
+  bool _containsAnimalProducts(
+    List<Map<String, String>> ingredients,
+    List<String> allergens,
+  ) {
+    const animalProductKeywords = [
+      'milk',
+      'dairy',
+      'cheese',
+      'butter',
+      'cream',
+      'whey',
+      'casein',
+      'egg',
+      'egg white',
+      'egg yolk',
+      'lactose',
+      'honey',
+    ];
+
+    bool matches(String text) {
+      final lower = text.toLowerCase();
+      return animalProductKeywords.any((k) => lower.contains(k));
+    }
+
+    for (final ing in ingredients) {
+      final name = ing['name']?.toString() ?? '';
+      if (matches(name)) return true;
+    }
+    for (final allergen in allergens) {
+      if (matches(allergen)) return true;
+    }
+    return false;
   }
 }
