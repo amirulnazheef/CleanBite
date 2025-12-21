@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**AI-powered food scanner for dietary classification and allergen detection**
+**AI-powered ingredient scanner for dietary classification and allergen detection**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.10+-02569B?logo=flutter)](https://flutter.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
@@ -14,97 +14,75 @@
 
 ## 📖 About
 
-CleanBite is a modern Flutter application that helps users make informed food choices by scanning products and analyzing their ingredients. The app provides instant dietary classification (Halal, Kosher, Vegan, Vegetarian) and comprehensive allergen detection to keep users safe and aligned with their dietary preferences.
+CleanBite is a Flutter app that helps users make informed food choices by scanning ingredient labels and analyzing allergens. It provides instant dietary classification (Halal, Kosher, Vegan, Vegetarian) and aligns results with the user’s saved preferences.
 
 ### Key Features
 
-- 🔍 **Multiple Scanning Options**
-  - Barcode scanning for quick product lookup
-  - OCR-based ingredient list scanning
-  - Camera and gallery image upload support
+- 🔍 **Ingredient Scanning**
+  - Capture label photos with the camera
+  - Upload existing images from gallery
+  - OCR-based ingredient extraction
 
 - 🥗 **Dietary Classification**
-  - Automatic detection of Halal, Kosher, Vegan, and Vegetarian compliance
-  - Real-time dietary preference matching
+  - Halal, Kosher, Vegan, Vegetarian flags
+  - Matches results to user preferences
 
 - ⚠️ **Allergen Detection**
-  - Comprehensive allergen database
-  - Custom allergen tracking
-  - Instant alerts for potential allergens
+  - Built-in allergen list plus custom entries
+  - Instant alerts when allergens are detected
 
 - 👤 **User Profiles**
-  - Personalized dietary preferences
+  - Dietary preference setup
   - Allergen management
-  - Scan history tracking
+  - Scan history
   - Google Sign-In integration
 
 - 🎨 **Modern UI/UX**
-  - Beautiful glassmorphism design
-  - Smooth animations and transitions
-  - Responsive layout for all screen sizes
+  - Soft glassmorphism design
+  - Smooth transitions and responsive layout
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Flutter SDK (3.10.0 or higher)
-- Dart SDK (included with Flutter)
-- Firebase account
+- Firebase project (Firestore + Auth enabled)
 - Google Sign-In credentials (for authentication)
 
-### Installation
+### Setup & Run
 
-1. **Clone the repository**
+1. **Clone & install**
    ```bash
    git clone https://github.com/amirulnazheef/CleanBite.git
    cd CleanBite
-   ```
-
-2. **Install dependencies**
-   ```bash
    flutter pub get
    ```
 
-3. **Configure Firebase**
-   
-   Install FlutterFire CLI if you haven't already:
+2. **Configure Firebase**
    ```bash
    dart pub global activate flutterfire_cli
-   ```
-   
-   Configure Firebase for your project:
-   ```bash
    flutterfire configure
    ```
-   
-   This will generate the necessary configuration files for all platforms.
+   (Ensure Android/iOS configs are generated; web is optional.)
 
-4. **Set up Google Sign-In**
-   
-   - Configure OAuth 2.0 credentials in [Google Cloud Console](https://console.cloud.google.com/)
-   - Add your web client ID to Firebase Authentication settings
-   - For Android: Add SHA-1 fingerprint to Firebase project settings
+3. **Set backend URL in Firestore**
+   - Create a document `config/backend` with field `url` pointing to your backend image-processing endpoint (HTTPS recommended).
+   - This is used by `BackendService` to process scanned images.
 
-5. **Run the app**
+4. **Run on device or simulator**
    ```bash
-   # Web
-   flutter run -d chrome
-   
-   # Android
-   flutter run -d android
-   
-   # iOS
-   flutter run -d ios
+   flutter run -d android   # or ios, macos, etc.
    ```
+   Web build is optional; the primary target is mobile/desktop for this course.
 
 ## 📱 Platform Support
 
-- ✅ Web
 - ✅ Android
 - ✅ iOS
 - ✅ macOS
 - ✅ Linux
 - ✅ Windows
+- ⚪️ Web (optional; ensure HTTPS + CORS on your backend)
 
 ## 🏗️ Project Structure
 
@@ -136,20 +114,12 @@ lib/
 - **Image Processing**: Image Picker, File Picker
 - **UI Components**: Custom glassmorphism widgets
 
-## 📦 Dependencies
+## 📦 Dependencies (high level)
 
-Key packages used in this project:
-
-- `firebase_core` - Firebase initialization
-- `firebase_auth` - User authentication
-- `cloud_firestore` - Database
-- `google_sign_in` - Google authentication
-- `provider` - State management
-- `shared_preferences` - Local storage
-- `image_picker` - Image selection
-- `file_picker` - File selection
-
-See [pubspec.yaml](pubspec.yaml) for the complete list.
+- `firebase_core`, `firebase_auth`, `cloud_firestore`, `google_sign_in`
+- `provider` for state management
+- `image_picker` / `file_picker` for camera + gallery
+- See [pubspec.yaml](pubspec.yaml) for full list.
 
 ## 🔧 Configuration
 
@@ -167,11 +137,7 @@ No additional environment variables are required. All configuration is handled t
 ## 🧪 Testing
 
 ```bash
-# Run all tests
 flutter test
-
-# Run tests with coverage
-flutter test --coverage
 ```
 
 ## 📝 Contributing
@@ -196,7 +162,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@cleanbite.app or open an issue in this repository.
+For support, open an issue in this repository.
 
 ## 🗺️ Roadmap
 
