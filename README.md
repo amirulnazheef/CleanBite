@@ -69,20 +69,16 @@ CleanBite is a Flutter app that helps users make informed food choices by scanni
    - Create a document `config/backend` with field `url` pointing to your backend image-processing endpoint (HTTPS recommended).
    - This is used by `BackendService` to process scanned images.
 
-4. **Run on device or simulator**
+4. **Run in Chrome (demo)**
    ```bash
-   flutter run -d android   # or ios, macos, etc.
+   flutter run -d chrome
    ```
-   Web build is optional; the primary target is mobile/desktop for this course.
+   The demo is intended for web only.
 
 ## 📱 Platform Support
 
-- ✅ Android
-- ✅ iOS
-- ✅ macOS
-- ✅ Linux
-- ✅ Windows
-- ⚪️ Web (optional; ensure HTTPS + CORS on your backend)
+- ✅ Web (Chrome) — primary demo target
+- ⚪️ Other platforms are not required for the professor demo and are untested here
 
 ## 🏗️ Project Structure
 
@@ -140,16 +136,6 @@ No additional environment variables are required. All configuration is handled t
 flutter test
 ```
 
-## 📝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -163,23 +149,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support, open an issue in this repository.
-
-## 🗺️ Roadmap
-
-- [ ] Barcode database integration
-- [ ] Advanced OCR for ingredient recognition
-- [ ] Multi-language support
-- [ ] Offline mode
-- [ ] Recipe suggestions based on dietary preferences
-- [ ] Social sharing features
-- [ ] Nutrition information display
-
----
-
-<div align="center">
-
-Made with ❤️ using Flutter
-
-⭐ Star this repo if you find it helpful!
-
-</div>
