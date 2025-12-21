@@ -193,8 +193,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildProfilePhoto() {
     return Consumer<FirebaseAuthService>(
       builder: (context, authService, child) {
-        // Prioritize Firebase Auth photo URL (always up-to-date) then Firestore
-        final photoUrl = authService.currentUser?.photoURL ?? authService.userData?.photoUrl;
+        // Prioritize Firestore value (user-set) then Firebase Auth
+        final photoUrl = (authService.userData?.photoUrl?.isNotEmpty ?? false)
+            ? authService.userData!.photoUrl
+            : authService.currentUser?.photoURL;
         
         debugPrint('Edit Profile Photo Debug:');
         debugPrint('  Firebase Auth photoURL: ${authService.currentUser?.photoURL}');

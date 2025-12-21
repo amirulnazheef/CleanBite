@@ -368,7 +368,11 @@ class FirebaseAuthService extends ChangeNotifier {
     try {
       final updates = <String, dynamic>{};
       if (displayName != null) updates['displayName'] = displayName.trim();
-      if (photoUrl != null) updates['photoUrl'] = photoUrl;
+      if (photoUrl != null) {
+        updates['photoUrl'] = photoUrl.trim();
+        // Also update Firebase Auth photo so it's picked up everywhere
+        await _auth.currentUser!.updatePhotoURL(photoUrl.trim());
+      }
       updates['updatedAt'] = FieldValue.serverTimestamp();
 
       await _firestore
@@ -379,7 +383,7 @@ class FirebaseAuthService extends ChangeNotifier {
       // Update local data
       _userData = _userData!.copyWith(
         displayName: displayName?.trim(),
-        photoUrl: photoUrl,
+        photoUrl: photoUrl?.trim(),
       );
       notifyListeners();
 

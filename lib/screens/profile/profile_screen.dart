@@ -204,8 +204,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileAvatar(UserData? userData, dynamic firebaseUser) {
-    // Get photo URL - prioritize Firebase Auth (always up-to-date) then Firestore
-    final photoUrl = firebaseUser?.photoURL ?? userData?.photoUrl;
+    // Get photo URL - prioritize Firestore (user-set) then Firebase Auth
+    final photoUrl = (userData?.photoUrl?.isNotEmpty ?? false)
+        ? userData!.photoUrl
+        : firebaseUser?.photoURL;
     
     debugPrint('_buildProfileAvatar - photoUrl: $photoUrl');
     
