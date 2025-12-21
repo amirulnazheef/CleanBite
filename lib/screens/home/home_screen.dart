@@ -15,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  late final PageController _pageController;
   
   final List<Widget> _pages = [
     const DashboardPage(),
@@ -22,8 +23,27 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProfileScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onTabTapped(int index) {
     if (index == _currentIndex) return;
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+      );
+    }
     setState(() => _currentIndex = index);
   }
 
@@ -38,9 +58,14 @@ class _HomeScreenState extends State<HomeScreen> {
               gradient: AppTheme.backgroundGradient,
             ),
           ),
-          // Page content - no animation
-          IndexedStack(
-            index: _currentIndex,
+          // Page content with swipe
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              if (_currentIndex != index) {
+                setState(() => _currentIndex = index);
+              }
+            },
             children: _pages,
           ),
           // Liquid Glass Tab Bar at bottom
@@ -60,13 +85,11 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          // Outer glow
           BoxShadow(
             color: AppTheme.primaryOrange.withValues(alpha: 0.15),
             blurRadius: 30,
             spreadRadius: 0,
           ),
-          // Soft shadow
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
@@ -105,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 _buildTabItem(
                   index: 1,
-                  icon: Icons.qr_code_scanner_rounded,
+                  icon: Icons.document_scanner,
                   label: 'Scan',
                   isCenter: true,
                 ),
@@ -129,7 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isCenter = false,
   }) {
     final isSelected = _currentIndex == index;
-    
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
@@ -291,17 +313,6 @@ class DashboardPage extends StatelessWidget {
                 Expanded(
                   child: _buildQuickActionCard(
                     context,
-                    icon: Icons.qr_code_scanner,
-                    label: 'Scan Barcode',
-                    onTap: () {
-                      Navigator.of(context).pushNamed(AppRoutes.scanBarcode);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    context,
                     icon: Icons.camera_alt_outlined,
                     label: 'Scan Ingredients',
                     onTap: () {
@@ -399,7 +410,7 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Start by scanning a product barcode\nor ingredients list',
+            'Start by scanning an ingredients list image',
             textAlign: TextAlign.center,
             style: AppTheme.bodyMedium.copyWith(
               color: AppTheme.textMuted.withValues(alpha: 0.7),

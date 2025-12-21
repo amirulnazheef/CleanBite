@@ -16,15 +16,27 @@ class ResultScreen extends StatelessWidget {
     final ingredients = _normalizeIngredients(resultData?['ingredients']);
     final classificationFlags =
         (resultData?['classificationMap'] as Map<String, dynamic>?) ?? {};
+<<<<<<< HEAD
     final userPrefs = FirebaseAuthService().userData?.dietaryPreferences;
+=======
+    final allergens = _normalizeStringList(resultData?['allergens']);
+    final userData = FirebaseAuthService().userData;
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
     final classification = _calculateOverallClassification(
-      resultData?['classification']?.toString(),
       ingredients,
       classificationFlags,
+<<<<<<< HEAD
       userPrefs,
+=======
+      userData,
+      allergens,
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
     );
-    final dietarySummary = resultData?['dietarySummary']?.toString();
-    final allergens = _normalizeStringList(resultData?['allergens']);
+    final dietarySummary = _buildDietarySummary(
+      baseSummary: resultData?['dietarySummary']?.toString(),
+      classification: classification,
+    );
+    final adjustedFlags = _adjustFlagsForClassification(classificationFlags, classification);
     final facts = _normalizeFacts(resultData?['facts']);
     final usedAI = resultData?['usedAI'] == true;
 
@@ -136,8 +148,17 @@ class ResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+<<<<<<< HEAD
                     if (classificationFlags.isNotEmpty) ...[
                       _buildDietaryFlags(classificationFlags, userPrefs),
+=======
+                    if (dietarySummary != null && dietarySummary.isNotEmpty) ...[
+                      _buildSummaryCard(dietarySummary),
+                      const SizedBox(height: 16),
+                    ],
+                    if (adjustedFlags.isNotEmpty) ...[
+                      _buildDietaryFlags(adjustedFlags),
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
                       const SizedBox(height: 16),
                     ],
                     _buildAllergenSection(allergens),
@@ -827,12 +848,41 @@ class ResultScreen extends StatelessWidget {
     }
   }
 
+  String _buildDietarySummary({
+    String? baseSummary,
+    required String classification,
+  }) {
+    if (classification.toLowerCase() == 'avoid') {
+      return 'This product is not compatible with your dietary preferences.';
+    }
+    return baseSummary ?? '';
+  }
+
+  Map<String, dynamic> _adjustFlagsForClassification(
+    Map<String, dynamic> flags,
+    String classification,
+  ) {
+    if (flags.isEmpty) return {};
+
+    final lowered = classification.toLowerCase();
+    // If overall result is avoid, do not show any diet as compatible.
+    if (lowered == 'avoid') {
+      return {
+        'halal': false,
+        'kosher': false,
+        'vegan': false,
+        'vegetarian': false,
+      };
+    }
+    return flags;
+  }
+
   /// Calculate overall product classification based on ingredient statuses
   /// Priority: restricted > doubtful > safe
   String _calculateOverallClassification(
-    String? backendClassification,
     List<Map<String, String>> ingredients,
     Map<String, dynamic> flags,
+<<<<<<< HEAD
     DietaryPreferences? prefs,
   ) {
     bool hasRestricted = false;
@@ -882,13 +932,108 @@ class ResultScreen extends StatelessWidget {
       final vegetarian = flags['vegetarian'] == true;
       final halal = flags['halal'] == true;
       final kosher = flags['kosher'] == true;
+=======
+    UserData? user,
+    List<String> detectedAllergens,
+  ) {
+    bool hasRestricted = false;
+    bool hasDoubtful = false;
+    bool hasPreferences = false;
+    bool hasAllergenPrefs = false;
+    bool globalRestricted = false; // applies to everyone
+    bool preferenceSpecificRestricted = false;
+    bool preferenceSpecificDoubtful = false;
 
-      if (vegan) return 'vegan';
-      if (vegetarian) return 'vegetarian';
-      if (halal) return 'halal';
-      if (kosher) return 'kosher';
+    final prefs = user?.dietaryPreferences;
+    if (prefs != null) {
+      hasPreferences = prefs.halal || prefs.kosher || prefs.vegan || prefs.vegetarian;
+    }
+
+    final userAllergens = <String>{};
+    if (user != null) {
+      userAllergens.addAll(user.allergens.map((a) => a.toLowerCase()));
+      userAllergens.addAll(user.customAllergens.map((a) => a.toLowerCase()));
+    }
+    hasAllergenPrefs = userAllergens.isNotEmpty;
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
+
+    // No preferences or allergens configured: user can consume everything
+    if (!hasPreferences && !hasAllergenPrefs) {
       return 'safe to consume';
     }
+
+    for (var ingredient in ingredients) {
+      final status = ingredient['status']?.toString().toLowerCase() ?? 'safe';
+      final restrictedFor = ingredient['restrictedFor']?.toLowerCase() ?? '';
+      final name = ingredient['name']?.toLowerCase() ?? '';
+
+      if (status == 'restricted' && restrictedFor.isEmpty) {
+        // Backend marked this universally restricted
+        globalRestricted = true;
+      } else if (status == 'restricted' && hasPreferences) {
+        // Only matters if user has the matching preference enabled
+        if (_matchesUserPreference(restrictedFor, prefs)) {
+          preferenceSpecificRestricted = true;
+        }
+      }
+
+      if (status == 'doubtful' && hasPreferences) {
+        preferenceSpecificDoubtful = true;
+      }
+
+      // Treat ambiguous proteins like gelatin as doubtful only when preferences are set
+      if (name.contains('gelatin') && hasPreferences) {
+        preferenceSpecificDoubtful = true;
+      }
+    }
+
+    // Allergen check against user profile
+    if (hasAllergenPrefs) {
+      final detected = detectedAllergens.map((a) => a.toLowerCase()).toSet();
+      if (detected.any(userAllergens.contains)) {
+        hasRestricted = true;
+      }
+    }
+
+    // Preference alignment (halal/kosher/vegan/vegetarian)
+    bool preferenceConflict = false;
+    bool preferenceUnknown = false;
+
+    void evaluatePreference(bool isEnabled, dynamic flag) {
+      if (!isEnabled) return;
+      if (flag == true) return;
+      if (flag == false) {
+        preferenceConflict = true; // explicitly fails the preference
+      } else {
+        preferenceUnknown = true; // unknown status → doubtful
+      }
+    }
+
+    if (prefs != null) {
+      evaluatePreference(prefs.halal, flags['halal']);
+      evaluatePreference(prefs.kosher, flags['kosher']);
+      evaluatePreference(prefs.vegan, flags['vegan']);
+      evaluatePreference(prefs.vegetarian, flags['vegetarian']);
+    }
+
+    // Final decision: only safe to consume / doubtful / avoid
+    if (globalRestricted || hasRestricted || (hasPreferences && (preferenceConflict || preferenceSpecificRestricted))) {
+      return 'avoid';
+    }
+    if (hasPreferences && (hasDoubtful || preferenceUnknown || preferenceSpecificDoubtful)) {
+      return 'doubtful';
+    }
+    return 'safe to consume';
+  }
+
+  bool _matchesUserPreference(String restrictedFor, DietaryPreferences? prefs) {
+    if (prefs == null) return false;
+    final tag = restrictedFor.toLowerCase();
+    if (tag.contains('halal') && prefs.halal) return true;
+    if (tag.contains('kosher') && prefs.kosher) return true;
+    if (tag.contains('vegan') && prefs.vegan) return true;
+    if (tag.contains('vegetarian') && prefs.vegetarian) return true;
+    return false;
   }
 
   List<String> _selectedPreferenceKeys(DietaryPreferences? prefs) {

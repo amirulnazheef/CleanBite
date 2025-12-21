@@ -95,7 +95,6 @@ class ScanHistoryItem {
   final String classification;
   final DateTime scanDate;
   final int ingredientCount;
-  final String? barcode;
   final String? imageUrl;
 
   ScanHistoryItem({
@@ -104,7 +103,6 @@ class ScanHistoryItem {
     required this.classification,
     required this.scanDate,
     required this.ingredientCount,
-    this.barcode,
     this.imageUrl,
   });
 }

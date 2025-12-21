@@ -20,8 +20,8 @@ class _ProcessingScreenState extends State<ProcessingScreen>
   
   final List<ProcessingStep> _steps = [
     ProcessingStep(
-      title: 'Reading product data...',
-      icon: Icons.qr_code_scanner,
+      title: 'Reading ingredient text...',
+      icon: Icons.document_scanner,
     ),
     ProcessingStep(
       title: 'Extracting ingredients...',

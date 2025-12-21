@@ -19,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingData(
       imagePath: 'assets/images/onboard1.png',
       title: 'Scan any product',
-      subtitle: 'Simply scan the barcode or take\nphoto of the ingredients list',
+      subtitle: 'Simply take a photo of the ingredients list\nfor instant analysis',
     ),
     OnboardingData(
       imagePath: 'assets/images/onboard2.png',

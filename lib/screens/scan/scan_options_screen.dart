@@ -33,45 +33,6 @@ class ScanOptionsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-            // Barcode Section
-            Text(
-              'Barcode',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textDark,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildScanOption(
-                    context,
-                    icon: Icons.qr_code_scanner,
-                    title: 'Scan Barcode',
-                    subtitle: 'Use camera to scan',
-                    onTap: () {
-                      Navigator.of(context).pushNamed(AppRoutes.scanBarcode);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildScanOption(
-                    context,
-                    icon: Icons.photo_library_outlined,
-                    title: 'Upload Image',
-                    subtitle: 'From gallery',
-                    onTap: () {
-                      // TODO: Implement barcode image upload
-                      _showComingSoon(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
             // Ingredients Section
             Text(
               'Ingredients List',
@@ -241,4 +202,3 @@ class ScanOptionsScreen extends StatelessWidget {
     );
   }
 }
-

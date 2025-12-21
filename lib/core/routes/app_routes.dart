@@ -6,7 +6,6 @@ import '../../screens/auth/signup_screen.dart';
 import '../../screens/auth/forgot_password_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/scan/scan_screen.dart';
-import '../../screens/scan/barcode_scanner_screen.dart';
 import '../../screens/scan/ingredient_scanner_screen.dart';
 import '../../screens/scan/processing_screen.dart';
 import '../../screens/scan/result_screen.dart';
@@ -26,7 +25,6 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
   static const String scanMenu = '/scan-menu';
-  static const String scanBarcode = '/scan-barcode';
   static const String scanIngredients = '/scan-ingredients';
   static const String processing = '/processing';
   static const String result = '/result';
@@ -54,8 +52,6 @@ class AppRoutes {
         return _fadeRoute(const HomeScreen(), settings);
       case scanMenu:
         return _slideUpRoute(const ScanScreen(), settings);
-      case scanBarcode:
-        return _slideRoute(const BarcodeScannerScreen(), settings);
       case scanIngredients:
         return _slideRoute(const IngredientScannerScreen(), settings);
       case processing:

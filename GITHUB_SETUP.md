@@ -5,7 +5,7 @@
 Use this as your repository description on GitHub:
 
 ```
-🍽️ AI-powered food scanner for dietary classification and allergen detection. Built with Flutter & Firebase. Scan barcodes, analyze ingredients, and get instant dietary compliance alerts.
+🍽️ AI-powered food scanner for dietary classification and allergen detection. Built with Flutter & Firebase. Scan ingredients, analyze labels, and get instant dietary compliance alerts.
 ```
 
 ## 🏷️ Suggested Topics/Tags
@@ -18,7 +18,6 @@ Add these topics to your GitHub repository for better discoverability:
 - `food-scanner`
 - `allergen-detection`
 - `dietary-classification`
-- `barcode-scanner`
 - `ocr`
 - `mobile-app`
 - `web-app`
@@ -127,4 +126,3 @@ If you plan to use CI/CD for deployments, you may need to add secrets:
 ---
 
 **Note**: Remember to update the repository URL in README.md and other files with your actual GitHub username/organization name.
-

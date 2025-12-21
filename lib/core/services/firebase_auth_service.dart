@@ -642,7 +642,6 @@ class DietaryPreferences {
 class ScanHistoryItem {
   final String? id;
   final String productName;
-  final String? barcode;
   final int ingredientCount;
   final String classification;
   final DateTime scannedAt;
@@ -651,7 +650,6 @@ class ScanHistoryItem {
   ScanHistoryItem({
     this.id,
     required this.productName,
-    this.barcode,
     required this.ingredientCount,
     required this.classification,
     required this.scannedAt,
@@ -661,7 +659,6 @@ class ScanHistoryItem {
   Map<String, dynamic> toMap() {
     return {
       'productName': productName,
-      'barcode': barcode,
       'ingredientCount': ingredientCount,
       'classification': classification,
       'scannedAt': Timestamp.fromDate(scannedAt),
@@ -673,7 +670,6 @@ class ScanHistoryItem {
     return ScanHistoryItem(
       id: id,
       productName: map['productName'] ?? 'Unknown Product',
-      barcode: map['barcode'],
       ingredientCount: map['ingredientCount'] ?? 0,
       classification: map['classification'] ?? 'Unknown',
       scannedAt: (map['scannedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

@@ -33,12 +33,12 @@ class ScanScreen extends StatelessWidget {
             // Option 1: Scan with Camera
             _buildScanOption(
               context,
-              icon: Icons.qr_code_scanner_rounded,
-              title: 'Scan with Camera',
-              description: 'Scan barcode or ingredients',
+              icon: Icons.document_scanner,
+              title: 'Scan Ingredients',
+              description: 'Capture label with your camera',
               gradient: AppTheme.buttonGradient,
               onTap: () {
-                _showCameraOptions(context);
+                Navigator.of(context).pushNamed(AppRoutes.scanIngredients);
               },
             ),
             const SizedBox(height: 16),
@@ -46,8 +46,8 @@ class ScanScreen extends StatelessWidget {
             _buildScanOption(
               context,
               icon: Icons.photo_library_rounded,
-              title: 'Upload Image',
-              description: 'Select from gallery',
+              title: 'Upload Ingredients',
+              description: 'Select existing photo',
               gradient: LinearGradient(
                 colors: [
                   AppTheme.success.withValues(alpha: 0.8),
@@ -55,7 +55,7 @@ class ScanScreen extends StatelessWidget {
                 ],
               ),
               onTap: () {
-                _showUploadOptions(context);
+                _pickImage(context);
               },
             ),
             const SizedBox(height: 20),
@@ -83,8 +83,8 @@ class ScanScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  _buildStep('1', 'Scan or upload a barcode'),
-                  _buildStep('2', 'If not found, scan ingredient list'),
+                  _buildStep('1', 'Scan or upload the ingredients list'),
+                  _buildStep('2', 'Let CleanBite read every ingredient'),
                   _buildStep('3', 'Get instant dietary classification'),
                 ],
               ),
@@ -200,6 +200,7 @@ class ScanScreen extends StatelessWidget {
     );
   }
 
+<<<<<<< HEAD
   void _showCameraOptions(BuildContext context) {
     final parentContext = context;
     showModalBottomSheet(
@@ -324,6 +325,10 @@ class ScanScreen extends StatelessWidget {
 
   Future<void> _pickImage(BuildContext context, {required bool isBarcode}) async {
     debugPrint('🔍 _pickImage called - isBarcode: $isBarcode');
+=======
+  Future<void> _pickImage(BuildContext context) async {
+    debugPrint('🔍 _pickImage called for ingredient scan');
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
     
     // Show loading indicator
     if (context.mounted) {
@@ -433,7 +438,7 @@ class ScanScreen extends StatelessWidget {
         Navigator.of(context).pushNamed(
           AppRoutes.processing,
           arguments: {
-            'type': isBarcode ? 'barcode' : 'ingredients',
+            'type': 'ingredients',
             'source': 'gallery',
             'imagePath': path,
             'imageBytes': result.bytes,
@@ -452,7 +457,7 @@ class ScanScreen extends StatelessWidget {
               label: 'Retry',
               textColor: Colors.white,
               onPressed: () {
-                _pickImage(context, isBarcode: isBarcode);
+                _pickImage(context);
               },
             ),
           ),
@@ -472,7 +477,7 @@ class ScanScreen extends StatelessWidget {
               label: 'Retry',
               textColor: Colors.white,
               onPressed: () {
-                _pickImage(context, isBarcode: isBarcode);
+                _pickImage(context);
               },
             ),
           ),
@@ -481,6 +486,7 @@ class ScanScreen extends StatelessWidget {
     }
   }
 
+<<<<<<< HEAD
   Widget _buildOptionTile(
     BuildContext context, {
     required IconData icon,
@@ -536,4 +542,6 @@ class ScanScreen extends StatelessWidget {
       ),
     );
   }
+=======
+>>>>>>> 701b9f2 (Update UI flow and scan logic)
 }

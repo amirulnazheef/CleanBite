@@ -158,7 +158,7 @@ class ErrorScreen extends StatelessWidget {
           icon: Icons.camera_alt_outlined,
           color: AppTheme.warning,
           title: 'Camera Access Required',
-          description: 'We need camera access to scan barcodes and ingredients. Please grant permission in your device settings.',
+          description: 'We need camera access to scan your ingredient labels. Please grant permission in your device settings.',
           suggestions: [
             'Go to Settings > Apps > CleanBite > Permissions',
             'Enable Camera access',
@@ -166,20 +166,6 @@ class ErrorScreen extends StatelessWidget {
           ],
           primaryAction: 'Open Settings',
           secondaryAction: 'Go Back',
-        );
-      case 'barcode_not_found':
-        return ErrorInfo(
-          icon: Icons.qr_code_scanner,
-          color: AppTheme.shubhahOrange,
-          title: 'Barcode Not Found',
-          description: 'We couldn\'t detect a barcode in the image. Make sure the barcode is clearly visible.',
-          suggestions: [
-            'Ensure good lighting',
-            'Hold your camera steady',
-            'Position barcode within the frame',
-            'Try cleaning the barcode surface',
-          ],
-          primaryAction: 'Try Again',
         );
       case 'ingredients_unreadable':
         return ErrorInfo(
@@ -276,4 +262,3 @@ class ErrorInfo {
     this.onPrimaryAction,
   });
 }
-
