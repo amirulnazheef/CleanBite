@@ -25,7 +25,7 @@ dependencies:
   # Image Picker (works on mobile)
   image_picker: ^1.0.7
   # File Picker (better web support)
-  file_picker: ^8.1.4
+  file_picker: ^10.3.10
   
   # Scanning
   mobile_scanner: ^5.1.2
